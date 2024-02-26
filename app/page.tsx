@@ -200,7 +200,7 @@ export default function Home() {
               {!isEditing &&
                 <div>
                   <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Server URL</label>
-                  <input autoComplete='username' value={serverUrl} onChange={(event) => setServerUrl(event.target.value)} placeholder="YOURSERVER.com" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                  <input autoComplete='username' value={serverUrl} onChange={(event) => setServerUrl(event.target.value)} placeholder="YOURSERVER.com" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 </div>
               }
               {!isEditing &&
@@ -232,7 +232,7 @@ export default function Home() {
             <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">
               <div className='mb-2'>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィード名</label>
-                <input value={feedName} onChange={(event) => setFeedName(event.target.value)} placeholder="超テスト" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <input value={feedName} onChange={(event) => setFeedName(event.target.value)} placeholder="超テスト" name="recordname" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">Blueskyに表示されるフィード名になります。</p>
               </div>
 
@@ -246,13 +246,13 @@ export default function Home() {
             <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">
               <div className='mb-2'>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Record Name</label>
-                <input value={recordName} onChange={(event) => setRecordName(event.target.value)} placeholder="starrysky01" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <input value={recordName} onChange={(event) => setRecordName(event.target.value)} placeholder="starrysky01" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">通常は変更不要です。他のカスタムフィード製品から乗り換える場合は、以前使っていたレコード名を入力してください。</p>
               </div>
 
               <div>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">言語フィルタ</label>
-                <input value={lang} onChange={(event) => setLang(event.target.value)} placeholder="ja" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <input value={lang} onChange={(event) => setLang(event.target.value)} placeholder="ja" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">日本語に絞り込む場合は「ja」と入力します。複数指定する場合は[,]で区切ります。絞り込みを行わない場合は入力不要です。</p>
               </div>
             </div>
@@ -261,13 +261,13 @@ export default function Home() {
               <div>
                 <div className='text-gray-800'>Refresh</div>
 
-                <input value={refresh} onChange={(event) => setRefresh(event.target.value)} placeholder="100" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <input value={refresh} onChange={(event) => setRefresh(event.target.value)} placeholder="100" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">ここにマイナスな数を入力すると、その件数登録済みの投稿が削除されます。「Invert修正したので、30件ぐらい前のあの投稿を消したい、」の時は-50ぐらいを指定します。</p>
               </div>
 
               <div>
                 <div className='text-gray-800'>初期取り込み件数</div>
-                <input value={initPost} onChange={(event) => setInitPost(event.target.value)} placeholder="100" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <input value={initPost} onChange={(event) => setInitPost(event.target.value)} placeholder="100" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">最初の処理において取り込む件数を指定します。</p>
               </div>
             </div>
