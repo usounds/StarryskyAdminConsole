@@ -1,7 +1,11 @@
 "use client"
 export const runtime = 'edge';
-import { useState } from "react";
+import { useCallback, useRef, useState } from 'react';
 import { TextareaAutosize } from '@mui/base';
+import { BskyAgent } from '@atproto/api'
+import { AtpAgent, BlobRef } from '@atproto/api'
+
+const agent = new BskyAgent({ service: 'https://bsky.social' })
 
 export default function Home() {
   const [serverUrl, setServerUrl] = useState("https://");
@@ -25,6 +29,14 @@ export default function Home() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isServerEditable, setIsSerberEditable] = useState(true);
+  const [feedAvatar, setFeedAvatar] = useState<File>()
+  const [feedName, setFeedName] = useState("");
+  const [feedDescription, setFeedDescriptione] = useState("");
+  const [blueskyHandle, setBlueskyHandle] = useState("");
+  const [blueskyAppPassword, setBlueskyAppPassword] = useState("");
+
+  
+  const [feedAvatarImg, setFeedAvatarImg] = useState('')
 
   const onLoad = async (): Promise<void> => {
 
@@ -112,6 +124,69 @@ export default function Home() {
 
   }
 
+  const onPublishFeed = async (): Promise<void> => {
+
+    let avatarRef: BlobRef | undefined
+    let encoding:string = ''
+    
+    if (feedAvatar?.name.endsWith('jpg')) {
+      encoding = 'image/png'
+    } else if (feedAvatar?.name.endsWith('jpg') || feedAvatar?.name.endsWith('jpeg')) {
+      encoding = 'image/jpeg'
+    } else if(feedAvatar) {
+      alert('ファイル形式はJPNかJPGです')
+      return
+    }
+
+    try{
+      if(!agent.hasSession) await agent.login({ identifier: blueskyHandle, password:blueskyAppPassword })
+    }catch(e){
+      alert(e)
+      return
+    }
+
+    if(feedAvatar){
+      const fileUint = new Uint8Array(await feedAvatar.arrayBuffer())
+
+      const blobRes = await agent.uploadBlob(fileUint, {
+        encoding,
+      })
+      avatarRef = blobRes.data.blob
+    }
+
+    let hostname = serverUrl.replace("https://", "").replace("/", "")
+
+    try{
+      await agent.api.com.atproto.repo.putRecord({
+        repo: agent.session?.did ?? '',
+        collection: 'app.bsky.feed.generator',
+        rkey: recordName,
+        record: {
+          did: "did:web:"+hostname,
+          displayName: feedName,
+          description: feedDescription,
+          avatar: avatarRef,
+          createdAt: new Date().toISOString(),
+        },
+      })
+    }catch(e){
+      alert(e)
+
+    }
+
+    alert('更新完了')
+
+  }
+
+  const changeFeedAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+
+    const imgObject = e.target.files[0];
+    setFeedAvatar(imgObject)
+    setFeedAvatarImg(window.URL.createObjectURL(imgObject))
+    
+  };
+
   return (
     <main >
       <div className="bg-white py-4 sm:py-4 lg:py-4">
@@ -119,16 +194,16 @@ export default function Home() {
           <h2 className="mb-4 text-center text-2xl font-bold text-gray-800 md:mb-4 lg:text-3xl">Starrysky Admin Console</h2>
 
           <p className="mx-auto max-w-screen-md text-center text-gray-500 md:text-lg mb-3">Starryskyのご利用は、事前に<a href="https://blog.usounds.work/posts/starry-sky-01/" className="text-black">Query Engineの構築</a>が必要です。</p>
+          
           <div className="mx-auto max-w-lg rounded-lg border">
-
             <div className="flex flex-col gap-4 p-4 md:p-8">
               <div>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Server URL</label>
-                <input value={serverUrl} onChange={(event) => setServerUrl(event.target.value)} placeholder="YOURSERVER.com" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <input autoComplete='username' value={serverUrl} onChange={(event) => setServerUrl(event.target.value)} placeholder="YOURSERVER.com" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
               </div>
               <div>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Web Pass Keyword</label>
-                <input type="password" value={webPassKey} onChange={(event) => setWebPassKey(event.target.value)} placeholder="EDIT_WEB_PASSKEYの設定値" name="password" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <input autoComplete='username' type="password" value={webPassKey} onChange={(event) => setWebPassKey(event.target.value)} placeholder="EDIT_WEB_PASSKEYの設定値" name="password" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
               </div>
               <div>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Edit Custom Feed</label>
@@ -146,15 +221,30 @@ export default function Home() {
         </div>
       </div>
 
-      {isEditing &&
+      {!isEditing &&
 
         <div className="bg-white py-6 sm:py-8 lg:py-12">
           <div className="mx-auto max-w-screen-2xl px-4 md:px-8">
+            
+            <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">
+              <div className='mb-2'>
+              <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィード名</label>
+                <input value={feedName} onChange={(event) => setFeedName(event.target.value)} placeholder="超テスト" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">Blueskyに表示されるフィード名になります。</p>
+              </div>
+
+              <div>
+              <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィードの説明</label>
+                <TextareaAutosize value={feedDescription} onChange={(event) => setFeedDescriptione(event.target.value)} className="border bg-gray-50 text-gray-800 py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none 0" placeholder="テスト用のフィードです"></TextareaAutosize>
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">カスタムフィードのAboutに表示されます。</p>
+              </div>
+            </div>
+
             <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">
               <div className='mb-2'>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Record Name</label>
-                <input value={recordName} onChange={(event) => setRecordName(event.target.value)} placeholder="YOURSERVER.com" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">通常は変更不要です</p>
+                <input value={recordName} onChange={(event) => setRecordName(event.target.value)} placeholder="starrysky01" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">通常は変更不要です。他のカスタムフィード製品から乗り換える場合は、以前使っていたレコード名を入力してください。</p>
               </div>
 
               <div>
@@ -162,48 +252,19 @@ export default function Home() {
                 <input value={lang} onChange={(event) => setLang(event.target.value)} placeholder="ja" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">日本語に絞り込む場合は「ja」と入力します。複数指定する場合は[,]で区切ります。絞り込みを行わない場合は入力不要です。</p>
               </div>
-
-
             </div>
 
             <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">
               <div>
                 <div className='text-gray-800'>Refresh</div>
-                <div className="py-2 px-3 bg-gray-100 rounded-lg dark:bg-slate-700" data-hs-input-number>
-                  <div className="w-full flex justify-between items-center gap-x-5">
-                    <div className="grow">
-                      <input value={refresh} onChange={(event) => setRefresh(event.target.value)} className="w-full p-0 bg-transparent border-0 text-gray-800 focus:ring-0 dark:text-white" type="text" data-hs-input-number-input />
-                    </div>
-                    <div className="flex justify-end items-center gap-x-1.5">
-                      <button type="button" className="size-6 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-md border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600" data-hs-input-number-decrement>
-                        <svg className="flex-shrink-0 size-3.5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /></svg>
-                      </button>
-                      <button type="button" className="size-6 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-md border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600" data-hs-input-number-increment>
-                        <svg className="flex-shrink-0 size-3.5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">ここにマイナスな数を入力すると、その件数登録済みの投稿が削除され、再度正規表現の処理を行います。</p>
+
+                <input value={refresh} onChange={(event) => setRefresh(event.target.value)} placeholder="100" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">ここにマイナスな数を入力すると、その件数登録済みの投稿が削除されます。「Invert修正したので、30件ぐらい前のあの投稿を消したい、」の時は-50ぐらいを指定します。</p>
               </div>
 
               <div>
                 <div className='text-gray-800'>初期取り込み件数</div>
-                <div className="py-2 px-3 bg-gray-50 rounded-lg " data-hs-input-number>
-                  <div className="w-full flex justify-between items-center gap-x-5">
-                    <div className="grow">
-                      <input value={initPost} onChange={(event) => setInitPost(event.target.value)} className="border w-full p-0 bg-transparent border-0 text-gray-800 focus:ring-0" type="text" data-hs-input-number-input />
-                    </div>
-                    <div className="flex justify-end items-center gap-x-1.5 border-1">
-                      <button type="button" className="size-6 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-md border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600" data-hs-input-number-decrement>
-                        <svg className="flex-shrink-0 size-3.5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /></svg>
-                      </button>
-                      <button type="button" className="size-6 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-md border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600" data-hs-input-number-increment>
-                        <svg className="flex-shrink-0 size-3.5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <input value={initPost} onChange={(event) => setInitPost(event.target.value)} placeholder="100" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">最初の処理において取り込む件数を指定します。</p>
               </div>
             </div>
@@ -222,7 +283,7 @@ export default function Home() {
                     <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">表示しない</label>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">センシティブ設定された投稿の表示を切り替えます</p>
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">センシティブ設定された投稿を検索対象にします。</p>
               </div>
 
               <div>
@@ -239,7 +300,7 @@ export default function Home() {
                       <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">表示しない</label>
                     </div>
                   </div>
-                  <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">リプライの表示を切り替えます。</p>
+                  <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">リプライの表示を検索対象にします。</p>
                 </div>
               </div>
             </div>
@@ -313,20 +374,45 @@ export default function Home() {
                 <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">入力した内容をQuery Engineに書き込みます。</p>
               </div>
             </div>
+            <div className="bg-white py-4 sm:py-4 lg:py-4">
+        <div className="mx-auto max-w-screen-2xl px-4 md:px-8">
+          <div className="mx-auto max-w-lg rounded-lg border">
+            <div className="flex flex-col gap-4 p-4 md:p-4">
+            <p className="text-xs text-gray-400 dark:text-gray-600">作成した後にBlueskyのアプリからカスタムフィードを参照できるようにするには「公開」が必要です。一同公開すれば、説明文やアイコンを変更したい場合を除き、再度公開する必要はありません。</p>
+              <div>
+                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Bluesky Handle</label>
+                <input value={blueskyHandle} onChange={(event) => setBlueskyHandle(event.target.value)} placeholder="abcd.bsky.socials" name="bskyuername" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+              </div>
+              <div>
+                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Bluesky App Password</label>
+                <input value={blueskyAppPassword} onChange={(event) => setBlueskyAppPassword(event.target.value)} placeholder="zxcv-asdf-qwer" name="bskyapppassword" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+              </div>
+              <div>
+                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィードのアイコン</label>       
+                <input type="file" accept=".png, .jpg, .jpeg"  className="pl-4 text-gray-800" onChange={changeFeedAvatar}/>
+            <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。</p>
+              </div>
 
+              <button onClick={onPublishFeed} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">公開</button>
+            </div>
 
           </div>
         </div>
+      </div>
+
+          </div>
+          
+        </div>
+
+        
       }
-
-
       
       <footer className="bg-gray-900">
       <div className="text-sm text-gray-400 lg:mt-0 dark:text-gray-400 container flex flex-col items-center justify-between px-2 py-4 mx-auto lg:flex-row">
-        <div>ver.2024-02-26</div>
+        <div>ver.2024-02-27</div>
 
         <div className="text-sm text-gray-100 flex flex-wrap items-center justify-center gap-4 mt-6 lg:gap-6 lg:mt-0">
-            <a href='https://blog.usounds.work/posts/starry-sky-01/' target='_blank'>Query Engineセットアップ</a>
+            <a href='https://blog.usounds.work/posts/starry-sky-01/' target='_blank'>Query Engine Setup</a>
         </div>
 
         <div className="text-sm text-gray-100 flex flex-wrap items-center justify-center gap-4 mt-6 lg:gap-6 lg:mt-0">
@@ -341,7 +427,7 @@ export default function Home() {
             <a href='https://www.buymeacoffee.com/usounds' target='_blank'>buymeacoffee</a>
         </div>
 
-        <div className="mt-6 text-sm text-gray-400 lg:mt-0 dark:text-gray-400">© Copyright 2024 usounds. </div>
+        <div className="mt-6 text-sm text-gray-400 lg:mt-0 dark:text-gray-400">© Copyright 2024 usounds.</div>
       </div>
       </footer>
 
