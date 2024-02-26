@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 export async function POST(request: Request) {
     const { serverUrl, authkey,key } = (await request.json()) as { serverUrl: string, authkey: string,key:string }
 
