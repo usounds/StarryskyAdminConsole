@@ -35,7 +35,7 @@ export default function Home() {
   const [blueskyHandle, setBlueskyHandle] = useState("");
   const [blueskyAppPassword, setBlueskyAppPassword] = useState("");
 
-  
+
   const [feedAvatarImg, setFeedAvatarImg] = useState('')
 
   const onLoad = async (): Promise<void> => {
@@ -127,25 +127,25 @@ export default function Home() {
   const onPublishFeed = async (): Promise<void> => {
 
     let avatarRef: BlobRef | undefined
-    let encoding:string = ''
-    
+    let encoding: string = ''
+
     if (feedAvatar?.name.endsWith('jpg')) {
       encoding = 'image/png'
     } else if (feedAvatar?.name.endsWith('jpg') || feedAvatar?.name.endsWith('jpeg')) {
       encoding = 'image/jpeg'
-    } else if(feedAvatar) {
+    } else if (feedAvatar) {
       alert('ファイル形式はJPNかJPGです')
       return
     }
 
-    try{
-      if(!agent.hasSession) await agent.login({ identifier: blueskyHandle, password:blueskyAppPassword })
-    }catch(e){
+    try {
+      if (!agent.hasSession) await agent.login({ identifier: blueskyHandle, password: blueskyAppPassword })
+    } catch (e) {
       alert(e)
       return
     }
 
-    if(feedAvatar){
+    if (feedAvatar) {
       const fileUint = new Uint8Array(await feedAvatar.arrayBuffer())
 
       const blobRes = await agent.uploadBlob(fileUint, {
@@ -156,20 +156,20 @@ export default function Home() {
 
     let hostname = serverUrl.replace("https://", "").replace("/", "")
 
-    try{
+    try {
       await agent.api.com.atproto.repo.putRecord({
         repo: agent.session?.did ?? '',
         collection: 'app.bsky.feed.generator',
         rkey: recordName,
         record: {
-          did: "did:web:"+hostname,
+          did: "did:web:" + hostname,
           displayName: feedName,
           description: feedDescription,
           avatar: avatarRef,
           createdAt: new Date().toISOString(),
         },
       })
-    }catch(e){
+    } catch (e) {
       alert(e)
 
     }
@@ -184,7 +184,7 @@ export default function Home() {
     const imgObject = e.target.files[0];
     setFeedAvatar(imgObject)
     setFeedAvatarImg(window.URL.createObjectURL(imgObject))
-    
+
   };
 
   return (
@@ -194,17 +194,21 @@ export default function Home() {
           <h2 className="mb-4 text-center text-2xl font-bold text-gray-800 md:mb-4 lg:text-3xl">Starrysky Admin Console</h2>
 
           <p className="mx-auto max-w-screen-md text-center text-gray-500 md:text-lg mb-3">Starryskyのご利用は、事前に<a href="https://blog.usounds.work/posts/starry-sky-01/" className="text-black">Query Engineの構築</a>が必要です。</p>
-          
+
           <div className="mx-auto max-w-lg rounded-lg border">
             <div className="flex flex-col gap-4 p-4 md:p-8">
-              <div>
-                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Server URL</label>
-                <input autoComplete='username' value={serverUrl} onChange={(event) => setServerUrl(event.target.value)} placeholder="YOURSERVER.com" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-              </div>
-              <div>
-                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Web Pass Keyword</label>
-                <input autoComplete='username' type="password" value={webPassKey} onChange={(event) => setWebPassKey(event.target.value)} placeholder="EDIT_WEB_PASSKEYの設定値" name="password" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-              </div>
+              {!isEditing &&
+                <div>
+                  <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Server URL</label>
+                  <input autoComplete='username' value={serverUrl} onChange={(event) => setServerUrl(event.target.value)} placeholder="YOURSERVER.com" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                </div>
+              }
+              {!isEditing &&
+                <div>
+                  <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Web Pass Keyword</label>
+                  <input autoComplete='username' type="password" value={webPassKey} onChange={(event) => setWebPassKey(event.target.value)} placeholder="EDIT_WEB_PASSKEYの設定値" name="password" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                </div>
+              }
               <div>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Edit Custom Feed</label>
                 <select value={editFeed} onChange={(event) => { setEditFeed(event.target.value); setIsEditing(false); }} className="py-3 px-4 pe-9 border-2 block w-full bg-gray-50 ring-indigo-300 text-gray-800 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none ">
@@ -213,7 +217,6 @@ export default function Home() {
                 </select>
                 <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">編集するカスタムフィードを選択します。</p>
               </div>
-
               <button onClick={onLoad} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">読み込み</button>
             </div>
 
@@ -225,16 +228,16 @@ export default function Home() {
 
         <div className="bg-white py-6 sm:py-8 lg:py-12">
           <div className="mx-auto max-w-screen-2xl px-4 md:px-8">
-            
+
             <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">
               <div className='mb-2'>
-              <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィード名</label>
+                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィード名</label>
                 <input value={feedName} onChange={(event) => setFeedName(event.target.value)} placeholder="超テスト" name="email" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">Blueskyに表示されるフィード名になります。</p>
               </div>
 
               <div>
-              <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィードの説明</label>
+                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィードの説明</label>
                 <TextareaAutosize value={feedDescription} onChange={(event) => setFeedDescriptione(event.target.value)} className="border bg-gray-50 text-gray-800 py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none 0" placeholder="テスト用のフィードです"></TextareaAutosize>
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">カスタムフィードのAboutに表示されます。</p>
               </div>
@@ -375,60 +378,60 @@ export default function Home() {
               </div>
             </div>
             <div className="bg-white py-4 sm:py-4 lg:py-4">
-        <div className="mx-auto max-w-screen-2xl px-4 md:px-8">
-          <div className="mx-auto max-w-lg rounded-lg border">
-            <div className="flex flex-col gap-4 p-4 md:p-4">
-            <p className="text-xs text-gray-400 dark:text-gray-600">作成した後にBlueskyのアプリからカスタムフィードを参照できるようにするには「公開」が必要です。一同公開すれば、説明文やアイコンを変更したい場合を除き、再度公開する必要はありません。</p>
-              <div>
-                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Bluesky Handle</label>
-                <input value={blueskyHandle} onChange={(event) => setBlueskyHandle(event.target.value)} placeholder="abcd.bsky.socials" name="bskyuername" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-              </div>
-              <div>
-                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Bluesky App Password</label>
-                <input value={blueskyAppPassword} onChange={(event) => setBlueskyAppPassword(event.target.value)} placeholder="zxcv-asdf-qwer" name="bskyapppassword" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-              </div>
-              <div>
-                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィードのアイコン</label>       
-                <input type="file" accept=".png, .jpg, .jpeg"  className="pl-4 text-gray-800" onChange={changeFeedAvatar}/>
-            <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。</p>
-              </div>
+              <div className="mx-auto max-w-screen-2xl px-4 md:px-8">
+                <div className="mx-auto max-w-lg rounded-lg border">
+                  <div className="flex flex-col gap-4 p-4 md:p-4">
+                    <p className="text-xs text-gray-400 dark:text-gray-600">作成した後にBlueskyのアプリからカスタムフィードを参照できるようにするには「公開」が必要です。一同公開すれば、説明文やアイコンを変更したい場合を除き、再度公開する必要はありません。</p>
+                    <div>
+                      <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Bluesky Handle</label>
+                      <input value={blueskyHandle} onChange={(event) => setBlueskyHandle(event.target.value)} placeholder="abcd.bsky.socials" name="bskyuername" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                    </div>
+                    <div>
+                      <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Bluesky App Password</label>
+                      <input value={blueskyAppPassword} type="password" onChange={(event) => setBlueskyAppPassword(event.target.value)} placeholder="zxcv-asdf-qwer" name="bskyapppassword" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                    </div>
+                    <div>
+                      <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィードのアイコン</label>
+                      <input type="file" accept=".png, .jpg, .jpeg" className="pl-4 text-gray-800" onChange={changeFeedAvatar} />
+                      <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。</p>
+                    </div>
 
-              <button onClick={onPublishFeed} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">公開</button>
+                    <button onClick={onPublishFeed} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">公開</button>
+                  </div>
+
+                </div>
+              </div>
             </div>
 
           </div>
-        </div>
-      </div>
 
-          </div>
-          
         </div>
 
-        
+
       }
-      
+
       <footer className="bg-gray-900">
-      <div className="text-sm text-gray-400 lg:mt-0 dark:text-gray-400 container flex flex-col items-center justify-between px-2 py-4 mx-auto lg:flex-row">
-        <div>ver.2024-02-27</div>
+        <div className="text-sm text-gray-400 lg:mt-0 dark:text-gray-400 container flex flex-col items-center justify-between px-2 py-4 mx-auto lg:flex-row">
+          <div>ver.2024-02-27</div>
 
-        <div className="text-sm text-gray-100 flex flex-wrap items-center justify-center gap-4 mt-6 lg:gap-6 lg:mt-0">
+          <div className="text-sm text-gray-100 flex flex-wrap items-center justify-center gap-4 mt-6 lg:gap-6 lg:mt-0">
             <a href='https://blog.usounds.work/posts/starry-sky-01/' target='_blank'>Query Engine Setup</a>
-        </div>
+          </div>
 
-        <div className="text-sm text-gray-100 flex flex-wrap items-center justify-center gap-4 mt-6 lg:gap-6 lg:mt-0">
+          <div className="text-sm text-gray-100 flex flex-wrap items-center justify-center gap-4 mt-6 lg:gap-6 lg:mt-0">
             <a href='https://github.com/usounds/StarryskyQueryEngine' target='_blank'>GitHub(Query Engine)</a>
-        </div>
+          </div>
 
-        <div className="text-sm text-gray-100 flex flex-wrap items-center justify-center gap-4 mt-6 lg:gap-6 lg:mt-0">
+          <div className="text-sm text-gray-100 flex flex-wrap items-center justify-center gap-4 mt-6 lg:gap-6 lg:mt-0">
             <a href='https://github.com/usounds' target='_blank'>GitHub(Admin Console)</a>
-        </div>
+          </div>
 
-        <div className="text-sm text-gray-100 flex flex-wrap items-center justify-center gap-4 mt-6 lg:gap-6 lg:mt-0">
+          <div className="text-sm text-gray-100 flex flex-wrap items-center justify-center gap-4 mt-6 lg:gap-6 lg:mt-0">
             <a href='https://www.buymeacoffee.com/usounds' target='_blank'>buymeacoffee</a>
-        </div>
+          </div>
 
-        <div className="mt-6 text-sm text-gray-400 lg:mt-0 dark:text-gray-400">© Copyright 2024 usounds.</div>
-      </div>
+          <div className="mt-6 text-sm text-gray-400 lg:mt-0 dark:text-gray-400">© Copyright 2024 usounds.</div>
+        </div>
       </footer>
 
     </main>
