@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <Head>
-          <meta name="viewport" content="width=device-width, initial-scale=0.9"/>
+          <meta name="viewport" content="width=device-width, initial-scale=1"/>
       </Head>
       <body className={inter.className}>{children}</body>
       <PrelineScript />

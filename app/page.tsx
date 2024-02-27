@@ -395,7 +395,7 @@ export default function Home() {
                     </div>
                     <div>
                       <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィードのアイコン</label>
-                      <input type="file" accept=".png, .jpg, .jpeg" className="pl-4 text-gray-800" onChange={changeFeedAvatar} />
+                      <input type="file" accept=".png, .jpg, .jpeg" className="mb-2 inline-block text-sm text-gray-800 sm:text-base" onChange={changeFeedAvatar} />
                       <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。</p>
                     </div>
 
