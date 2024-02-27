@@ -26,13 +26,15 @@ export default function Home() {
   const [initPost, setInitPost] = useState("");
   const [pinnedPost, setPinnedPost] = useState("");
   const [lastExecTime, setLastExecTime] = useState("");
+  const [limitCount, setLimitCount] = useState("");
+  const [privateFeed, setPrivateFeed] = useState("");
 
   const [isEditing, setIsEditing] = useState(false);
-  const [isServerEditable, setIsSerberEditable] = useState(true);
+  const [isServerEditable, setIsServerEditable] = useState(true);
   const [isCanPublish, setIsCanPublish] = useState(false);
   const [feedAvatar, setFeedAvatar] = useState<File>()
   const [feedName, setFeedName] = useState("");
-  const [feedDescription, setFeedDescriptione] = useState("");
+  const [feedDescription, setFeedDescription] = useState("");
   const [blueskyHandle, setBlueskyHandle] = useState("");
   const [blueskyAppPassword, setBlueskyAppPassword] = useState("");
 
@@ -67,8 +69,12 @@ export default function Home() {
         setInitPost(data.initPost)
         setPinnedPost(data.pinnedPost)
         setLastExecTime(data.lastExecTime)
+        setLimitCount(data.limitCount)
+        setFeedName(data.feedName)
+        setFeedDescription(data.feedDescription)
+        setPrivateFeed(data.privateFeed)
         setIsEditing(true)
-        setIsSerberEditable(false)
+        setIsServerEditable(false)
       } else {
         alert('ログインに失敗しました:' + res.status);
       }
@@ -99,7 +105,10 @@ export default function Home() {
           includeAltText: includeAltText,
           initPost: initPost,
           pinnedPost: pinnedPost,
-          serverUrl: serverUrl
+          serverUrl: serverUrl,
+          feedName: feedName,
+          feedDescription: feedDescription,
+          privateFeed: privateFeed
         }
       )
     };
@@ -180,6 +189,36 @@ export default function Home() {
 
   }
 
+
+  const onDeleteFeed = async (): Promise<void> => {
+    try {
+      if (!agent.hasSession) await agent.login({ identifier: blueskyHandle, password: blueskyAppPassword })
+    } catch (e) {
+      alert(e)
+      return
+    }
+
+    const did = agent.session?.did ?? ''
+
+    let record = {
+      repo: did,
+      collection: 'app.bsky.feed.generator',
+      rkey: recordName,
+    }
+
+    try {
+      await agent.api.com.atproto.repo.deleteRecord(
+        record
+      )
+      alert('削除結果はBlueskyで確認してください')
+    } catch (e) {
+      alert(e)
+      return
+    }
+
+
+  }
+
   const changeFeedAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
@@ -242,7 +281,7 @@ export default function Home() {
 
               <div>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィードの説明</label>
-                <TextareaAutosize value={feedDescription} onChange={(event) => setFeedDescriptione(event.target.value)} className="border bg-gray-50 text-gray-800 py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none 0" placeholder="テスト用のフィードです"></TextareaAutosize>
+                <TextareaAutosize value={feedDescription} onChange={(event) => setFeedDescription(event.target.value)} className="border bg-gray-50 text-gray-800 py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none 0" placeholder="テスト用のフィードです"></TextareaAutosize>
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">カスタムフィードのAboutに表示されます。</p>
               </div>
             </div>
@@ -397,12 +436,13 @@ export default function Home() {
                         <input value={blueskyAppPassword} type="password" onChange={(event) => setBlueskyAppPassword(event.target.value)} placeholder="zxcv-asdf-qwer" name="bskyapppassword" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                       </div>
                       <div>
-                        <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィードのアイコン</label>
                         <input type="file" accept=".png, .jpg, .jpeg" className="mb-2 w-[300px] inline-block text-sm text-gray-800 sm:text-base" onChange={changeFeedAvatar} />
                         <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。</p>
                       </div>
 
                       <button onClick={onPublishFeed} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">公開</button>
+                      <p className="text-xs text-gray-400 dark:text-gray-600">「登録」したカスタムフィードを削除します。プロフィールから非表示になります。Query Engineのサーバーは消えませんので、ご自身で削除ください。</p>
+                      <button onClick={onDeleteFeed} className="block rounded-lg bg-red-800 px-8 py-3 text-center text-sm text-white outline-none ring-red-300 transition duration-100 hover:bg-red-700 focus-visible:ring active:bg-red-600 md:text-base">削除</button>
                     </div>
 
                   </div>
@@ -422,7 +462,7 @@ export default function Home() {
     <div className="flex flex-col items-center justify-between gap-4 border-t border-b py-6 md:flex-row">
       <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 md:justify-start md:gap-6">
         <a href="https://blog.usounds.work/posts/starry-sky-01/" className="text-gray-500 transition duration-100 hover:text-indigo-500 active:text-indigo-600">Query Engine Setup</a>
-        <a href="https://www.buymeacoffee.com/usounds" className="text-gray-500 transition duration-100 hover:text-indigo-500 active:text-indigo-600">buymeacoffee</a>
+        <a href="https://www.buymeacoffee.com/usounds" className="text-gray-500 transition duration-100 hover:text-indigo-500 active:text-indigo-600">By me a coffee</a>
       </nav>
       <div className="flex gap-4">
         
