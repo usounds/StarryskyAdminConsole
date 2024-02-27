@@ -147,12 +147,11 @@ export default function Home() {
           setPutQueryMessage('')
           setIsCanPublish(true)
         } else {
-          alert(ret.res)
           setPutQueryMessage('更新処理が失敗しました:'+ret.res)
 
         }
       } else {
-        alert('更新処理が失敗しました')
+        setPutQueryMessage('更新処理が失敗しました:'+res.status)
 
       }
     } catch (err) {
