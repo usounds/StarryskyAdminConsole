@@ -29,6 +29,7 @@ export default function Home() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isServerEditable, setIsSerberEditable] = useState(true);
+  const [isCanPublish, setIsCanPublish] = useState(false);
   const [feedAvatar, setFeedAvatar] = useState<File>()
   const [feedName, setFeedName] = useState("");
   const [feedDescription, setFeedDescriptione] = useState("");
@@ -110,6 +111,7 @@ export default function Home() {
         const ret = await res.json();
         if (ret.res === 'OK') {
           alert('更新処理が成功しました')
+          setIsCanPublish(true)
         } else {
           alert('更新処理が失敗しました')
 
@@ -380,31 +382,33 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="bg-white py-4 sm:py-4 lg:py-4">
-              <div className="mx-auto max-w-screen-2xl px-4 md:px-8">
-                <div className="mx-auto max-w-lg rounded-lg border">
-                  <div className="flex flex-col gap-4 p-4 md:p-4">
-                    <p className="text-xs text-gray-400 dark:text-gray-600">作成した後にBlueskyのアプリからカスタムフィードを参照できるようにするには「公開」が必要です。一同公開すれば、説明文やアイコンを変更したい場合を除き、再度公開する必要はありません。</p>
-                    <div>
-                      <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Bluesky Handle</label>
-                      <input value={blueskyHandle} onChange={(event) => setBlueskyHandle(event.target.value)} placeholder="abcd.bsky.socials" name="bskyuername" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-                    </div>
-                    <div>
-                      <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Bluesky App Password</label>
-                      <input value={blueskyAppPassword} type="password" onChange={(event) => setBlueskyAppPassword(event.target.value)} placeholder="zxcv-asdf-qwer" name="bskyapppassword" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-                    </div>
-                    <div>
-                      <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィードのアイコン</label>
-                      <input type="file" accept=".png, .jpg, .jpeg" className="mb-2 inline-block text-sm text-gray-800 sm:text-base" onChange={changeFeedAvatar} />
-                      <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。</p>
+            {isCanPublish &&
+              <div className="bg-white py-4 sm:py-4 lg:py-4">
+                <div className="mx-auto max-w-screen-2xl px-4 md:px-8">
+                  <div className="mx-auto max-w-lg rounded-lg border">
+                    <div className="flex flex-col gap-4 p-4 md:p-4">
+                      <p className="text-xs text-gray-400 dark:text-gray-600">作成した後にBlueskyのアプリからカスタムフィードを参照できるようにするには「公開」が必要です。一同公開すれば、説明文やアイコンを変更したい場合を除き、再度公開する必要はありません。</p>
+                      <div>
+                        <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Bluesky Handle</label>
+                        <input value={blueskyHandle} onChange={(event) => setBlueskyHandle(event.target.value)} placeholder="abcd.bsky.socials" name="bskyuername" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                      </div>
+                      <div>
+                        <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Bluesky App Password</label>
+                        <input value={blueskyAppPassword} type="password" onChange={(event) => setBlueskyAppPassword(event.target.value)} placeholder="zxcv-asdf-qwer" name="bskyapppassword" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                      </div>
+                      <div>
+                        <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィードのアイコン</label>
+                        <input type="file" accept=".png, .jpg, .jpeg" className="mb-2 w-[300px] inline-block text-sm text-gray-800 sm:text-base" onChange={changeFeedAvatar} />
+                        <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。</p>
+                      </div>
+
+                      <button onClick={onPublishFeed} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">公開</button>
                     </div>
 
-                    <button onClick={onPublishFeed} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">公開</button>
                   </div>
-
                 </div>
               </div>
-            </div>
+            }
 
           </div>
 
@@ -430,7 +434,7 @@ export default function Home() {
 
         
         <a href="https://bsky.app/profile/usounds.work" target="_blank" className="text-gray-400 transition duration-100 hover:text-gray-500 active:text-gray-600">
-        <svg className="h-5 w-5" width="100%" height="100%" viewBox="0 0 1452 1452" xmlns="http://www.w3.org/2000/svg"><path d="M725.669,684.169c85.954,-174.908 196.522,-329.297 331.704,-463.171c45.917,-43.253 98.131,-74.732 156.638,-94.443c80.779,-23.002 127.157,10.154 139.131,99.467c-2.122,144.025 -12.566,287.365 -31.327,430.015c-29.111,113.446 -96.987,180.762 -203.629,201.947c-36.024,5.837 -72.266,8.516 -108.726,8.038c49.745,11.389 95.815,32.154 138.21,62.292c77.217,64.765 90.425,142.799 39.62,234.097c-37.567,57.717 -83.945,104.938 -139.131,141.664c-82.806,48.116 -154.983,33.716 -216.529,-43.202c-28.935,-38.951 -52.278,-81.818 -70.026,-128.603c-12.177,-34.148 -24.156,-68.309 -35.935,-102.481c-11.779,34.172 -23.757,68.333 -35.934,102.481c-17.748,46.785 -41.091,89.652 -70.027,128.603c-61.545,76.918 -133.722,91.318 -216.529,43.202c-55.186,-36.726 -101.564,-83.947 -139.131,-141.664c-50.804,-91.298 -37.597,-169.332 39.62,-234.097c42.396,-30.138 88.466,-50.903 138.21,-62.292c-36.46,0.478 -72.702,-2.201 -108.725,-8.038c-106.643,-21.185 -174.519,-88.501 -203.629,-201.947c-18.762,-142.65 -29.205,-285.99 -31.328,-430.015c11.975,-89.313 58.352,-122.469 139.132,-99.467c58.507,19.711 110.72,51.19 156.637,94.443c135.183,133.874 245.751,288.263 331.704,463.171Z" fill="currentColor"/></svg>
+        <svg className="h-5 w-5" width="24" height="24" viewBox="0 0 1452 1452" xmlns="http://www.w3.org/2000/svg"><path d="M725.669,684.169c85.954,-174.908 196.522,-329.297 331.704,-463.171c45.917,-43.253 98.131,-74.732 156.638,-94.443c80.779,-23.002 127.157,10.154 139.131,99.467c-2.122,144.025 -12.566,287.365 -31.327,430.015c-29.111,113.446 -96.987,180.762 -203.629,201.947c-36.024,5.837 -72.266,8.516 -108.726,8.038c49.745,11.389 95.815,32.154 138.21,62.292c77.217,64.765 90.425,142.799 39.62,234.097c-37.567,57.717 -83.945,104.938 -139.131,141.664c-82.806,48.116 -154.983,33.716 -216.529,-43.202c-28.935,-38.951 -52.278,-81.818 -70.026,-128.603c-12.177,-34.148 -24.156,-68.309 -35.935,-102.481c-11.779,34.172 -23.757,68.333 -35.934,102.481c-17.748,46.785 -41.091,89.652 -70.027,128.603c-61.545,76.918 -133.722,91.318 -216.529,43.202c-55.186,-36.726 -101.564,-83.947 -139.131,-141.664c-50.804,-91.298 -37.597,-169.332 39.62,-234.097c42.396,-30.138 88.466,-50.903 138.21,-62.292c-36.46,0.478 -72.702,-2.201 -108.725,-8.038c-106.643,-21.185 -174.519,-88.501 -203.629,-201.947c-18.762,-142.65 -29.205,-285.99 -31.328,-430.015c11.975,-89.313 58.352,-122.469 139.132,-99.467c58.507,19.711 110.72,51.19 156.637,94.443c135.183,133.874 245.751,288.263 331.704,463.171Z" fill="currentColor"/></svg>
         </a>
 
       </div>
