@@ -99,6 +99,7 @@ export default function Home() {
         setPrivateFeed(data.privateFeed)
         setIsEditing(true)
         setIsServerEditable(false)
+        setIsDemoMode(false)
       } else {
         setLoginMessage('読み込みに失敗しました。:'+await res.status)
       }
