@@ -12,6 +12,15 @@ export default function Home() {
   const [webPassKey, setWebPassKey] = useState("");
   const [editFeed, setEditFeed] = useState("starrysky01");
 
+  const [loginMessage, setLoginMessage] = useState("");
+  const [putQueryMessage, setPutQueryMessage] = useState("");
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [isServerEditable, setIsServerEditable] = useState(true);
+  const [isCanPublish, setIsCanPublish] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [isSpinner, setIsSpinner] = useState<boolean>(true)
+
   const [key, setKey] = useState("");
   const [recordName, setRecordName] = useState("");
   const [query, setQuery] = useState("");
@@ -19,19 +28,15 @@ export default function Home() {
   const [invertRegex, setInvertRegex] = useState("");
   const [refresh, setRefresh] = useState("");
   const [lang, setLang] = useState("");
-  const [labelDisable, setLabelDisable] = useState("");
-  const [replyDisable, setReplyDisable] = useState("");
-  const [imageOnly, setImageOnly] = useState("");
-  const [includeAltText, setIncludeAltText] = useState("");
+  const [labelDisable, setLabelDisable] = useState("true");
+  const [replyDisable, setReplyDisable] = useState("false");
+  const [imageOnly, setImageOnly] = useState("false");
+  const [includeAltText, setIncludeAltText] = useState("true");
   const [initPost, setInitPost] = useState("");
   const [pinnedPost, setPinnedPost] = useState("");
   const [lastExecTime, setLastExecTime] = useState("");
   const [limitCount, setLimitCount] = useState("");
   const [privateFeed, setPrivateFeed] = useState("");
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [isServerEditable, setIsServerEditable] = useState(true);
-  const [isCanPublish, setIsCanPublish] = useState(false);
   const [feedAvatar, setFeedAvatar] = useState<File>()
   const [feedName, setFeedName] = useState("");
   const [feedDescription, setFeedDescription] = useState("");
@@ -41,7 +46,25 @@ export default function Home() {
 
   const [feedAvatarImg, setFeedAvatarImg] = useState('')
 
+  const onDemoMode = async (): Promise<void> => {
+    setLoginMessage('')
+    setIsDemoMode(true)
+    setIsEditing(true)
+  }
+
   const onLoad = async (): Promise<void> => {
+
+    if(serverUrl==='https://') {
+      setLoginMessage('Server URLを入力してください。')
+      return
+      
+    }
+
+    if(webPassKey===''){
+      setLoginMessage('Web Pass Keywordを入力してください。')
+      return
+
+    }
 
     const requestOptions = {
       method: 'POST',
@@ -53,6 +76,7 @@ export default function Home() {
       const res = await fetch('/api/getQuery', requestOptions);
       console.log(res);
       if (res.status == 200) {
+        setLoginMessage('')
         let data = await res.json();
         console.log(data);
         setKey(data.key)
@@ -76,11 +100,11 @@ export default function Home() {
         setIsEditing(true)
         setIsServerEditable(false)
       } else {
-        alert('ログインに失敗しました:' + res.status);
+        setLoginMessage('読み込みに失敗しました。:'+await res.status)
       }
 
     } catch (err) {
-      alert(err)
+      setLoginMessage('読み込みに失敗しました'+err)
     }
   }
 
@@ -115,14 +139,15 @@ export default function Home() {
 
     try {
       const res = await fetch('/api/setQuery', requestOptions);
-      console.log('return')
       if (res.status == 200) {
         const ret = await res.json();
         if (ret.res === 'OK') {
           alert('更新処理が成功しました')
+          setPutQueryMessage('')
           setIsCanPublish(true)
         } else {
-          alert('更新処理が失敗しました')
+          alert(ret.res)
+          setPutQueryMessage('更新処理が失敗しました:'+ret.res)
 
         }
       } else {
@@ -261,6 +286,8 @@ export default function Home() {
                 <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">編集するカスタムフィードを選択します。</p>
               </div>
               <button onClick={onLoad} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">読み込み</button>
+              {!isEditing &&<button onClick={onDemoMode} className="block rounded-lg bg-gray-800 px-8 py-3 text-center text-sm text-white outline-none ring-gray-300 transition duration-100 hover:bg-gray-700 focus-visible:ring active:bg-gray-600 md:text-base">デモモード</button>}
+              {loginMessage && <p className="text-red-500">{loginMessage}</p>}
             </div>
 
           </div>
@@ -290,7 +317,7 @@ export default function Home() {
               <div className='mb-2'>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Record Name</label>
                 <input value={recordName} onChange={(event) => setRecordName(event.target.value)} placeholder="starrysky01" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">通常は変更不要です。他のカスタムフィード製品から乗り換える場合は、以前使っていたレコード名を入力してください。</p>
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">通常は変更不要です。SkyFeedやContrailsから乗り換える場合は、以前使っていたRecord Nameを入力してください。</p>
               </div>
 
               <div>
@@ -346,7 +373,7 @@ export default function Home() {
                       <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">表示しない</label>
                     </div>
                   </div>
-                  <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">リプライの表示を検索対象にします。</p>
+                  <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">リプライを検索対象にします。</p>
                 </div>
               </div>
             </div>
@@ -358,15 +385,15 @@ export default function Home() {
                 <div className="flex gap-x-6">
                   <div className="flex">
                     <input value="false" checked={imageOnly === "false"} onChange={(event) => setImageOnly(event.target.value)} type="radio" name="imags-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-800 dark:border-gray-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800" id="hs-radio-group-1" />
-                    <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">全て表示</label>
+                    <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">全て検索</label>
                   </div>
 
                   <div className="flex">
                     <input value="true" checked={imageOnly === "true"} onChange={(event) => setImageOnly(event.target.value)} type="radio" name="imags-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-800 dark:border-gray-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800" id="hs-radio-group-2" />
-                    <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">画像付き投稿のみ</label>
+                    <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">画像付き投稿のみ検索</label>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">画像つきの投稿を切り替えます</p>
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">画像が添付された投稿のみを検索対象とします。</p>
               </div>
 
               <div>
@@ -384,7 +411,7 @@ export default function Home() {
                     <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">検索しない</label>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">画像のALTに設定された文字を検索するかを切り替えます</p>
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">画像のALTに設定された文字を検索します。</p>
               </div>
             </div>
 
@@ -416,7 +443,8 @@ export default function Home() {
 
               <div>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">処理ボタン</label>
-                <button onClick={onSave} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">Query Engine更新</button>
+                { !isDemoMode && <button onClick={onSave} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">Query Engine更新</button>}
+                { putQueryMessage && <p className="text-red-500">{putQueryMessage}</p> }
                 <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">入力した内容をQuery Engineに書き込みます。</p>
               </div>
             </div>
