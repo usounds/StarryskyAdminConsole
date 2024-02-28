@@ -44,6 +44,7 @@ export default function Home() {
   const [feedDescription, setFeedDescription] = useState("");
   const [blueskyHandle, setBlueskyHandle] = useState("");
   const [blueskyAppPassword, setBlueskyAppPassword] = useState("");
+  const [recordCount, setRecordCount] = useState("");
 
 
   const [feedAvatarImg, setFeedAvatarImg] = useState('')
@@ -89,6 +90,7 @@ export default function Home() {
         setIsMemoryMode(data.isMemoryMode)
         setLoginMessage('')
         if (data.result === 'OK') {
+          setKey(editFeed)
           setRecordName(data.recordName)
           setQuery(data.query)
           setInputRegex(data.inputRegex)
@@ -107,6 +109,7 @@ export default function Home() {
           setFeedDescription(data.feedDescription)
           setPrivateFeed(data.privateFeed)
           setLimitCount(data.limitCount)
+          setRecordCount(data.recordCount)
           setIsEditing(true)
           setIsServerEditable(false)
           setIsDemoMode(false)
@@ -385,6 +388,21 @@ export default function Home() {
                 <TextareaAutosize value={feedDescription} onChange={(event) => setFeedDescription(event.target.value)} className="border bg-gray-50 text-gray-800 py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none 0" placeholder="テスト用のフィードです"></TextareaAutosize>
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">カスタムフィードのAboutに表示されます。</p>
               </div>
+            </div>
+
+            <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">
+              <div className='mb-2'>
+                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">処理時間</label>
+                <input disabled value={lastExecTime} onChange={(event) => setRecordName(event.target.value)} placeholder="starrysky01" className="w-full rounded border bg-gray-200 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">最後の取り込みジョブの処理時間です</p>
+              </div>
+
+              <div className='mb-2'>
+                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">現在の保存済み件数</label>
+                <input disabled value={recordCount} placeholder="100" className="w-full rounded border bg-gray-200 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">現在のDBに保存されている投稿数合計です。</p>
+              </div>
+
             </div>
 
             <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">
