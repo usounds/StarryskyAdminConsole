@@ -81,7 +81,7 @@ export default function Home() {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'x-starrtsky-xebpasskey':webPassKey },
+        'x-starrtsky-webpasskey':webPassKey },
       body: JSON.stringify({ serverUrl: paramServerURL, key: editFeed })
     };
 
@@ -171,7 +171,7 @@ export default function Home() {
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json',
-      'x-starrtsky-xebpasskey':webPassKey 
+      'x-starrtsky-webpasskey':webPassKey 
      },
       body: JSON.stringify(
         {
@@ -411,13 +411,13 @@ export default function Home() {
             <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">
               <div className='mb-2'>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">処理時間</label>
-                <input disabled value={lastExecTime} onChange={(event) => setRecordName(event.target.value)} placeholder="starrysky01" className="w-full rounded border bg-gray-200 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <input disabled value={lastExecTime} className="w-full rounded border bg-gray-200 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">入力項目ではありません。最後の取り込みジョブの処理時間です</p>
               </div>
 
               <div className='mb-2'>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">現在の投稿数合計</label>
-                <input disabled value={recordCount} placeholder="100" className="w-full rounded border bg-gray-200 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                <input disabled value={recordCount} className="w-full rounded border bg-gray-200 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">入力項目ではありません。Query Engineに登録されている投稿の件数です</p>
               </div>
 

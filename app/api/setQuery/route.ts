@@ -10,7 +10,7 @@ export async function POST(request: Request) {
         {
             method: 'post',headers: {
                 'Content-Type': 'application/json',
-                'X-Starrtsky-WebpassKey':request.headers.get('x-starrtsky-xebpasskey')||''
+                'X-Starrtsky-WebpassKey':request.headers.get('x-starrtsky-webpasskey')||''
             },
             body: JSON.stringify(body)
         }
