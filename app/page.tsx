@@ -14,6 +14,7 @@ export default function Home() {
 
   const [loginMessage, setLoginMessage] = useState("");
   const [putQueryMessage, setPutQueryMessage] = useState("");
+  const [publishMessage, setPublishMessage] = useState("");
 
   const [isEditing, setIsEditing] = useState(false);
   const [isServerEditable, setIsServerEditable] = useState(true);
@@ -78,8 +79,10 @@ export default function Home() {
 
     const requestOptions = {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ serverUrl: paramServerURL, authkey: webPassKey, key: editFeed })
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-starrtsky-xebpasskey':webPassKey },
+      body: JSON.stringify({ serverUrl: paramServerURL, key: editFeed })
     };
 
     try {
@@ -167,7 +170,9 @@ export default function Home() {
 
     const requestOptions = {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json',
+      'x-starrtsky-xebpasskey':webPassKey 
+     },
       body: JSON.stringify(
         {
           key: key,
@@ -175,7 +180,6 @@ export default function Home() {
           query: query,
           inputRegex: inputRegex,
           invertRegex: invertRegex,
-          authkey: webPassKey,
           refresh: refresh,
           lang: lang,
           labelDisable: labelDisable,
@@ -221,19 +225,31 @@ export default function Home() {
     let avatarRef: BlobRef | undefined
     let encoding: string = ''
 
+    if(blueskyHandle===''){
+      setPublishMessage('Bluesky Handleは必須です')
+      return
+
+    }
+
+    if(blueskyAppPassword===''){
+      setPublishMessage('Bluesky App Passwordは必須です')
+      return
+
+    }
+
     if (feedAvatar?.name.endsWith('jpg')) {
       encoding = 'image/png'
     } else if (feedAvatar?.name.endsWith('jpg') || feedAvatar?.name.endsWith('jpeg')) {
       encoding = 'image/jpeg'
     } else if (feedAvatar) {
-      alert('ファイル形式はJPNかJPGです')
+      setPublishMessage('ファイル形式はJPNかJPGです')
       return
     }
 
     try {
       if (!agent.hasSession) await agent.login({ identifier: blueskyHandle, password: blueskyAppPassword })
     } catch (e) {
-      alert(e)
+      setPublishMessage('エラーが発生しました：'+e)
       return
     }
 
@@ -262,11 +278,13 @@ export default function Home() {
         },
       })
     } catch (e) {
-      alert(e)
+      setPublishMessage('エラーが発生しました：'+e)
 
     }
 
     alert('更新完了')
+
+    setPublishMessage('')
 
   }
 
@@ -370,7 +388,7 @@ export default function Home() {
               <div className="mx-auto gap-4 mb-5">
                 <div className="mx-auto max-w-screen-2xl px-4">
                   <div className="flex flex-col items-center rounded-lg bg-gray-100 p-2 sm:p-4">
-                    <p className="text-center text-gray-500">現在、Query Engineはメモリモードで起動しています。Query Engineを再起動すると検索条件は失われますので、現時点ではご自身でメモを取ってください。</p>
+                    <p className="text-center text-gray-500">Query Engineはメモリモードで起動しています。Query Engineを再起動すると検索条件は失われますので、現時点ではご自身でメモを取ってください。</p>
                   </div>
                 </div>
               </div>
@@ -380,13 +398,13 @@ export default function Home() {
               <div className='mb-2'>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィード名</label>
                 <input value={feedName} onChange={(event) => setFeedName(event.target.value)} placeholder="超テスト" name="recordname" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">Blueskyに表示されるフィード名になります。</p>
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">Blueskyに表示されるフィード名になります。変更した場合は「公開」を行なわないとBlueskyのアプリに反映されません。</p>
               </div>
 
               <div>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">フィードの説明</label>
                 <TextareaAutosize value={feedDescription} onChange={(event) => setFeedDescription(event.target.value)} className="border bg-gray-50 text-gray-800 py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none 0" placeholder="テスト用のフィードです"></TextareaAutosize>
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">カスタムフィードのAboutに表示されます。</p>
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">BlueskyのAboutに表示されます。変更した場合は「公開」を行なわないとBlueskyのアプリに反映されません。</p>
               </div>
             </div>
 
@@ -394,13 +412,13 @@ export default function Home() {
               <div className='mb-2'>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">処理時間</label>
                 <input disabled value={lastExecTime} onChange={(event) => setRecordName(event.target.value)} placeholder="starrysky01" className="w-full rounded border bg-gray-200 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">最後の取り込みジョブの処理時間です</p>
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">入力項目ではありません。最後の取り込みジョブの処理時間です</p>
               </div>
 
               <div className='mb-2'>
-                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">現在の保存済み件数</label>
+                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">現在の投稿数合計</label>
                 <input disabled value={recordCount} placeholder="100" className="w-full rounded border bg-gray-200 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">現在のDBに保存されている投稿数合計です。</p>
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">入力項目ではありません。Query Engineに登録されている投稿の件数です</p>
               </div>
 
             </div>
@@ -424,7 +442,7 @@ export default function Home() {
                 <div className='text-gray-800'>Refresh</div>
 
                 <input value={refresh} onChange={(event) => setRefresh(event.target.value)} placeholder="100" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">ここにマイナスな数を入力すると、その件数登録済みの投稿が削除されます。「Invert修正したので、30件ぐらい前のあの投稿を消したい、」の時は-50ぐらいを指定します。</p>
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">その件数登録済みの投稿が削除されます。「Invert Regexを修正したので、30件ぐらい前のあの投稿を消したい、」の時は50ぐらいを指定します。</p>
               </div>
 
               <div>
@@ -440,12 +458,12 @@ export default function Home() {
                 <div className="flex gap-x-6">
                   <div className="flex">
                     <input value="false" checked={labelDisable === "false"} onChange={(event) => setLabelDisable(event.target.value)} type="radio" name="label-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-800 dark:border-gray-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800" id="hs-radio-group-1" />
-                    <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">表示する</label>
+                    <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">検索する</label>
                   </div>
 
                   <div className="flex">
                     <input value="true" checked={labelDisable === "true"} onChange={(event) => setLabelDisable(event.target.value)} type="radio" name="label-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-800 dark:border-gray-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800" id="hs-radio-group-2" />
-                    <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">表示しない</label>
+                    <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">検索しない</label>
                   </div>
                 </div>
                 <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">センシティブ設定された投稿を検索対象にします。</p>
@@ -457,12 +475,12 @@ export default function Home() {
                   <div className="flex gap-x-6">
                     <div className="flex">
                       <input value="false" checked={replyDisable === "false"} onChange={(event) => setReplyDisable(event.target.value)} type="radio" name="reply-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-800 dark:border-gray-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800" id="hs-radio-group-1" />
-                      <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">表示する</label>
+                      <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">検索する</label>
                     </div>
 
                     <div className="flex">
                       <input value="true" checked={replyDisable === "true"} onChange={(event) => setReplyDisable(event.target.value)} type="radio" name="reply-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-800 dark:border-gray-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800" id="hs-radio-group-2" />
-                      <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">表示しない</label>
+                      <label className="text-sm text-gray-500 ms-2 dark:text-gray-800">検索しない</label>
                     </div>
                   </div>
                   <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">リプライを検索対象にします。</p>
@@ -473,7 +491,7 @@ export default function Home() {
 
             <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">
               <div>
-                <div><label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">画像のみ表示<br /></label></div>
+                <div><label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">画像のみ投稿<br /></label></div>
                 <div className="flex gap-x-6">
                   <div className="flex">
                     <input value="false" checked={imageOnly === "false"} onChange={(event) => setImageOnly(event.target.value)} type="radio" name="imags-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-800 dark:border-gray-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800" id="hs-radio-group-1" />
@@ -561,6 +579,7 @@ export default function Home() {
                       </div>
 
                       <button onClick={onPublishFeed} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">公開</button>
+                      {publishMessage && <p className="text-red-500">{publishMessage}</p>}
                       <p className="text-xs text-gray-400 dark:text-gray-600">「公開」したカスタムフィードを削除します。プロフィールから非表示になります。Query Engineのサーバーは消えませんので、ご自身で削除ください。</p>
                       <button onClick={onDeleteFeed} className="block rounded-lg bg-red-800 px-8 py-3 text-center text-sm text-white outline-none ring-red-300 transition duration-100 hover:bg-red-700 focus-visible:ring active:bg-red-600 md:text-base">公開の取り下げ</button>
                     </div>
