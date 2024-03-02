@@ -21,7 +21,8 @@ export default function Home() {
   const [isCanPublish, setIsCanPublish] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isNewMode, setIsNewMode] = useState(false);
-  const [isMemoryMode, setIsMemoryMode] = useState(false);
+  //const [isMemoryMode, setIsMemoryMode] = useState(false);
+  const [isRestoreFromD1, setIsRestoreFromD1] = useState(false);
   const [isSpinner, setIsSpinner] = useState<boolean>(true)
 
   const [key, setKey] = useState("");
@@ -47,8 +48,28 @@ export default function Home() {
   const [blueskyAppPassword, setBlueskyAppPassword] = useState("");
   const [recordCount, setRecordCount] = useState("");
 
-
   const [feedAvatarImg, setFeedAvatarImg] = useState('')
+
+  interface Conditions {
+    serverUrl: string;
+    key: string;
+    recordName: string;
+    query: string;
+    inputRegex: string;
+    invertRegex: string;
+    refresh: number;
+    lang: string;
+    labelDisable: string;
+    replyDisable: string;
+    imageOnly: string;
+    initPost: number;
+    pinnedPost: string;
+    feedName: string;
+    feedDescription: string;
+    limitCount: number;
+    privateFeed: string;
+    includeAltText:string;
+  }
 
   const onDemoMode = async (): Promise<void> => {
     setLoginMessage('')
@@ -87,56 +108,118 @@ export default function Home() {
 
     try {
       const res = await fetch('/api/getQuery', requestOptions);
-      console.log(res);
+      const resJson= await res.json()
+      console.log(resJson);
       if (res.status == 200) {
-        let data = await res.json();
-        setIsMemoryMode(data.isMemoryMode)
+        const {isMemoryMode,recordName,query,inputRegex,invertRegex,refresh,lang,labelDisable,replyDisable,imageOnly,includeAltText,initPost,
+          pinnedPost,lastExecTime,limitCount,feedName,feedDescription,privateFeed,recordCount,result} = (resJson) as { 
+          isMemoryMode:boolean,
+          recordName:string,
+          query:string,
+          inputRegex:string,
+          invertRegex:string,
+          refresh:string,
+          lang:string,
+          labelDisable:string,
+          replyDisable:string,
+          imageOnly:string,
+          includeAltText:string,
+          initPost:string,
+          pinnedPost:string,
+          lastExecTime:string,
+          limitCount:string,
+          feedName:string,
+          feedDescription:string,
+          privateFeed:string,
+          recordCount:string,
+          result:string
+        }
         setLoginMessage('')
-        if (data.result === 'OK') {
+
+        //Query Engineにデータがある
+        if (result === 'OK') {
           setKey(editFeed)
-          setRecordName(data.recordName)
-          setQuery(data.query)
-          setInputRegex(data.inputRegex)
-          setInvertRegex(data.invertRegex)
-          setRefresh(data.refresh)
-          setLang(data.lang)
-          setLabelDisable(data.labelDisable)
-          setReplyDisable(data.replyDisable)
-          setImageOnly(data.imageOnly)
-          setIncludeAltText(data.includeAltText)
-          setInitPost(data.initPost)
-          setPinnedPost(data.pinnedPost)
-          setLastExecTime(data.lastExecTime)
-          setLimitCount(data.limitCount)
-          setFeedName(data.feedName)
-          setFeedDescription(data.feedDescription)
-          setPrivateFeed(data.privateFeed)
-          setLimitCount(data.limitCount)
-          setRecordCount(data.recordCount)
+          setRecordName(recordName)
+          setQuery(query)
+          setInputRegex(inputRegex)
+          setInvertRegex(invertRegex)
+          setRefresh(refresh)
+          setLang(lang)
+          setLabelDisable(labelDisable)
+          setReplyDisable(replyDisable)
+          setImageOnly(imageOnly)
+          setIncludeAltText(includeAltText)
+          setInitPost(initPost)
+          setPinnedPost(pinnedPost)
+          setLastExecTime(lastExecTime)
+          setLimitCount(limitCount)
+          setFeedName(feedName)
+          setFeedDescription(feedDescription)
+          setPrivateFeed(privateFeed)
+          setRecordCount(recordCount)
           setIsEditing(true)
           setIsServerEditable(false)
           setIsDemoMode(false)
           setIsNewMode(false)
-        } else if (data.result === 'NOT_FOUND') {
-          setKey(editFeed)
-          setRecordName(editFeed)
-          setQuery('')
-          setInputRegex('')
-          setInvertRegex('')
-          setRefresh('0')
-          setLang('')
-          setLabelDisable('true')
-          setReplyDisable('false')
-          setImageOnly('false')
-          setIncludeAltText('true')
-          setInitPost('100')
-          setPinnedPost('')
-          setLastExecTime('')
-          setLimitCount('500')
-          setFeedName('')
-          setFeedDescription('')
-          setPrivateFeed('false')
-          setLimitCount('500')
+          setIsRestoreFromD1(false)
+
+        // Query Engineにデータがない
+        } else if (result === 'NOT_FOUND') {
+          console.log('Query Engineデータなし')
+          //D1から取得する
+          const resD1 = await fetch('/api/getD1Query', requestOptions)
+          if(resD1.status==200){
+            const resD1Body = await resD1.json()
+            const {result,resultRecord} = (resD1Body) as { result:string, resultRecord:Conditions[]}
+
+            if(result==='OK'){
+              console.log('D1から復元')
+              const record = resultRecord[0]
+              console.log(record)
+              setKey(record.key)
+              setRecordName(record.recordName)
+              setQuery(record.query)
+              setInputRegex(record.inputRegex)
+              setInvertRegex(record.invertRegex)
+              setRefresh(record.refresh.toString())
+              setLang(record.lang)
+              setLabelDisable(record.labelDisable)
+              setReplyDisable(record.replyDisable)
+              setImageOnly(record.imageOnly)
+              setIncludeAltText(record.includeAltText)
+              setInitPost(record.initPost.toString())
+              setPinnedPost(record.pinnedPost)
+              setLimitCount(record.limitCount.toString())
+              setFeedName(record.feedName)
+              setFeedDescription(record.feedDescription)
+              setPrivateFeed(record.privateFeed)
+              setLimitCount(record.limitCount.toString())
+              setIsRestoreFromD1(true)
+            }else{
+              setKey(editFeed)
+              setRecordName(editFeed)
+              setQuery('')
+              setInputRegex('')
+              setInvertRegex('')
+              setRefresh('0')
+              setLang('')
+              setLabelDisable('true')
+              setReplyDisable('false')
+              setImageOnly('false')
+              setIncludeAltText('true')
+              setInitPost('100')
+              setPinnedPost('')
+              setLastExecTime('')
+              setLimitCount('500')
+              setFeedName('')
+              setFeedDescription('')
+              setPrivateFeed('')
+              setLimitCount('2000')
+              setIsRestoreFromD1(false)
+
+            }
+
+          }
           setIsEditing(true)
           setIsServerEditable(false)
           setIsDemoMode(false)
@@ -199,19 +282,23 @@ export default function Home() {
 
     try {
       const res = await fetch('/api/setQuery', requestOptions);
+      const returnObject =  await res.json()
+      const {result,message} = (returnObject) as { result:string,message:string }
       if (res.status == 200) {
-        const ret = await res.json();
-        if (ret.result === 'OK') {
+        //const ret = await res.json();
+        console.log(result+ ' : ' + message)
+        if (result === 'OK') {
           alert('更新処理が成功しました')
           setPutQueryMessage('')
           setIsCanPublish(true)
           setIsNewMode(false)
+          setIsRestoreFromD1(false)
         } else {
-          setPutQueryMessage('更新処理が失敗しました:' + ret.res)
+          setPutQueryMessage('更新処理が失敗しました:' + message)
 
         }
       } else {
-        setPutQueryMessage('更新処理が失敗しました:' + res.status)
+        setPutQueryMessage('更新処理が失敗しました:' + message)
 
       }
     } catch (err) {
@@ -384,11 +471,11 @@ export default function Home() {
                   }
 
                   
-            {isMemoryMode &&
+            {isRestoreFromD1 &&
               <div className="mx-auto gap-4 mb-5">
                 <div className="mx-auto max-w-screen-2xl px-4">
                   <div className="flex flex-col items-center rounded-lg bg-gray-100 p-2 sm:p-4">
-                    <p className="text-center text-gray-500">Query Engineはメモリモードで起動しています。Query Engineを再起動すると検索条件は失われますので、現時点ではご自身でメモを取ってください。</p>
+                    <p className="text-center text-gray-500">Query Engineには検索条件は保存されていませんでしたが、Admin Consoleに検索結果が残っていましたので復元しました。復元した内容はQuery Engineには登録されていませんので、必ずQuery Engineへの更新を行なってください。</p>
                   </div>
                 </div>
               </div>

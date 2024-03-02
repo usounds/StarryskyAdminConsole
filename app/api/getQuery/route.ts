@@ -2,12 +2,8 @@ import { headers } from 'next/headers'
 
 export const runtime = 'edge';
 export async function POST(request: Request) {
+    console.log('getQuery')
     const { serverUrl,key } = (await request.json()) as { serverUrl: string, key:string }
-    if(process.env.PRODUCTION_MODE==='1' && request.headers.get('origin')!=='https://starrysky-console.pages.dev'){
-        return new Response('error', {
-            status: 500
-        })
-    }
 
     const requestJson = {
         key : key
@@ -23,7 +19,12 @@ export async function POST(request: Request) {
         }
         );
 
-    return new Response(await result.body, {
+
+    const aaa = await result.json()
+
+    console.log(aaa)
+
+    return new Response(JSON.stringify(aaa), {
         status: result.status,
         headers: {
             'content-type': 'application/json'
