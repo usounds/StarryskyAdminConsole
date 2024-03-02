@@ -323,13 +323,13 @@ export default function Home() {
       return
 
     }
-
-    if (feedAvatar?.name.endsWith('jpg')) {
+    
+    if (feedAvatar?.name.endsWith('png')) {
       encoding = 'image/png'
     } else if (feedAvatar?.name.endsWith('jpg') || feedAvatar?.name.endsWith('jpeg')) {
       encoding = 'image/jpeg'
-    } else if (feedAvatar) {
-      setPublishMessage('ファイル形式はJPNかJPGです')
+    } else  {
+      setPublishMessage('ファイル形式はPNGかJPGです')
       return
     }
 
