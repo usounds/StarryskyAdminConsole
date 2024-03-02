@@ -2,8 +2,7 @@
 export const runtime = 'edge';
 import { useCallback, useRef, useState } from 'react';
 import { TextareaAutosize } from '@mui/base';
-import { BskyAgent } from '@atproto/api'
-import { AtpAgent, BlobRef } from '@atproto/api'
+import { BskyAgent,BlobRef } from '@atproto/api'
 
 const agent = new BskyAgent({ service: 'https://bsky.social' })
 
@@ -14,16 +13,18 @@ export default function Home() {
 
   const [loginMessage, setLoginMessage] = useState("");
   const [putQueryMessage, setPutQueryMessage] = useState("");
+  const [putQueryCompletMessage, setPutCompletQueryMessage] = useState("");
   const [publishMessage, setPublishMessage] = useState("");
+  const [publishCompleteMessage, setPublishCompleteMessage] = useState("");
 
   const [isEditing, setIsEditing] = useState(false);
   const [isServerEditable, setIsServerEditable] = useState(true);
   const [isCanPublish, setIsCanPublish] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isNewMode, setIsNewMode] = useState(false);
-  //const [isMemoryMode, setIsMemoryMode] = useState(false);
+  const [isMemoryMode, setIsMemoryMode] = useState(false);
   const [isRestoreFromD1, setIsRestoreFromD1] = useState(false);
-  const [isSpinner, setIsSpinner] = useState<boolean>(true)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const [key, setKey] = useState("");
   const [recordName, setRecordName] = useState("");
@@ -78,10 +79,12 @@ export default function Home() {
   }
 
   const onLoad = async (): Promise<void> => {
+    deleteMessage()
     let paramServerURL = serverUrl
 
     if (serverUrl === 'https://') {
       setLoginMessage('Server URLを入力してください。')
+      setIsLoading(false)
       return
 
     }
@@ -94,6 +97,7 @@ export default function Home() {
 
     if (webPassKey === '') {
       setLoginMessage('Web Pass Keywordを入力してください。')
+      setIsLoading(false)
       return
 
     }
@@ -232,22 +236,28 @@ export default function Home() {
     } catch (err) {
       setLoginMessage('読み込みに失敗しました' + err)
     }
+
+    setIsLoading(false)
   }
 
   const onSave = async (): Promise<void> => {
+    deleteMessage()
 
     if(recordName===''){
       setPutQueryMessage('Record Nameは必須です。Record Nameを入力してください。')
+      setIsLoading(false)
       return
     }
 
     if(query===''){
       setPutQueryMessage('Bluesky Queryは必須です。Bluesky Queryを入力してください。')
+      setIsLoading(false)
       return
     }
 
     if(inputRegex===''){
       setPutQueryMessage('Input Regexは必須です。Input Regexを入力してください。')
+      setIsLoading(false)
       return
     }
 
@@ -288,8 +298,8 @@ export default function Home() {
         //const ret = await res.json();
         console.log(result+ ' : ' + message)
         if (result === 'OK') {
-          alert('更新処理が成功しました')
           setPutQueryMessage('')
+          setPutCompletQueryMessage('更新処理が完了しました')
           setIsCanPublish(true)
           setIsNewMode(false)
           setIsRestoreFromD1(false)
@@ -302,24 +312,31 @@ export default function Home() {
 
       }
     } catch (err) {
+      setPutQueryMessage('更新処理が失敗しました:' + err)
 
     }
+
+
+    setIsLoading(false)
 
   }
 
   const onPublishFeed = async (): Promise<void> => {
+    deleteMessage()
 
     let avatarRef: BlobRef | undefined
     let encoding: string = ''
 
     if(blueskyHandle===''){
       setPublishMessage('Bluesky Handleは必須です')
+      setIsLoading(false)
       return
 
     }
 
     if(blueskyAppPassword===''){
       setPublishMessage('Bluesky App Passwordは必須です')
+      setIsLoading(false)
       return
 
     }
@@ -328,8 +345,9 @@ export default function Home() {
       encoding = 'image/png'
     } else if (feedAvatar?.name.endsWith('jpg') || feedAvatar?.name.endsWith('jpeg')) {
       encoding = 'image/jpeg'
-    } else  {
+    } else if(feedAvatar!== undefined)  {
       setPublishMessage('ファイル形式はPNGかJPGです')
+      setIsLoading(false)
       return
     }
 
@@ -337,6 +355,7 @@ export default function Home() {
       if (!agent.hasSession) await agent.login({ identifier: blueskyHandle, password: blueskyAppPassword })
     } catch (e) {
       setPublishMessage('エラーが発生しました：'+e)
+      setIsLoading(false)
       return
     }
 
@@ -352,7 +371,7 @@ export default function Home() {
     let hostname = serverUrl.replace("https://", "").replace("/", "")
 
     try {
-      await agent.api.com.atproto.repo.putRecord({
+      const ret = await agent.api.com.atproto.repo.putRecord({
         repo: agent.session?.did ?? '',
         collection: 'app.bsky.feed.generator',
         rkey: recordName,
@@ -364,23 +383,40 @@ export default function Home() {
           createdAt: new Date().toISOString(),
         },
       })
+      if(ret.success){
+        setPublishCompleteMessage('更新処理が成功しました')
+
+      }else{
+        setPublishMessage('エラーが発生しました：'+await ret)
+        
+      }
     } catch (e) {
       setPublishMessage('エラーが発生しました：'+e)
 
     }
 
-    alert('更新完了')
-
-    setPublishMessage('')
+    setIsLoading(false)
 
   }
 
+  function deleteMessage(){
+    setIsLoading(true)
+    setPublishCompleteMessage('')
+    setPublishMessage('')
+    setPutQueryMessage('')
+    setLoginMessage('')
+    setPutCompletQueryMessage('')
+
+  }
 
   const onDeleteFeed = async (): Promise<void> => {
+    deleteMessage()
+
     try {
       if (!agent.hasSession) await agent.login({ identifier: blueskyHandle, password: blueskyAppPassword })
     } catch (e) {
-      alert(e)
+      setPublishMessage('エラーが発生しました：'+e)
+      setIsLoading(false)
       return
     }
 
@@ -396,12 +432,12 @@ export default function Home() {
       await agent.api.com.atproto.repo.deleteRecord(
         record
       )
-      alert('削除結果はBlueskyで確認してください')
+      setPublishCompleteMessage('削除結果はBlueskyで確認してください')
     } catch (e) {
-      alert(e)
-      return
+      setPublishMessage('エラーが発生しました：'+e)
     }
 
+    setIsLoading(false)
 
   }
 
@@ -446,7 +482,7 @@ export default function Home() {
                 </select>
                 <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">編集するカスタムフィードを選択します。</p>
               </div>
-              <button onClick={onLoad} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">読み込み</button>
+              <button onClick={onLoad} disabled={isLoading} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">読み込み</button>
               {!isEditing && <button onClick={onDemoMode} className="block rounded-lg bg-gray-800 px-8 py-3 text-center text-sm text-white outline-none ring-gray-300 transition duration-100 hover:bg-gray-700 focus-visible:ring active:bg-gray-600 md:text-base">デモモード</button>}
               {loginMessage && <p className="text-red-500">{loginMessage}</p>}
             </div>
@@ -464,7 +500,7 @@ export default function Home() {
                     <div className="mx-auto gap-4 mb-5">
                       <div className="mx-auto max-w-screen-2xl px-4">
                         <div className="flex flex-col items-center rounded-lg bg-gray-100 p-2 sm:p-4">
-                          <p className="text-center text-gray-500">Query Engineには{key}は登録されていません。新規登録を行います。</p>
+                          <p className="text-center text-gray-500">Query Engineに{key}は登録されていません。新規登録を行います。</p>
                         </div>
                       </div>
                     </div>
@@ -475,7 +511,7 @@ export default function Home() {
               <div className="mx-auto gap-4 mb-5">
                 <div className="mx-auto max-w-screen-2xl px-4">
                   <div className="flex flex-col items-center rounded-lg bg-gray-100 p-2 sm:p-4">
-                    <p className="text-center text-gray-500">Query Engineには検索条件は保存されていませんでしたが、Admin Consoleに検索結果が残っていましたので復元しました。復元した内容はQuery Engineには登録されていませんので、必ずQuery Engineへの更新を行なってください。</p>
+                    <p className="text-center text-gray-500">Query Engineには{key}は保存されていませんでしたが、Admin Consoleに{key}が残っていましたので復元しました。復元した内容はQuery Engineには登録されていませんので、必ずQuery Engineへの更新を行なってください。</p>
                   </div>
                 </div>
               </div>
@@ -505,7 +541,7 @@ export default function Home() {
               <div className='mb-2'>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">現在の投稿数合計</label>
                 <input disabled value={recordCount} className="w-full rounded border bg-gray-200 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">入力項目ではありません。Query Engineに登録されている投稿の件数です</p>
+                <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">入力項目ではありません。Query Engineに登録されている投稿の件数です。Query Engineを更新した直後は0件と表示されます。</p>
               </div>
 
             </div>
@@ -640,9 +676,10 @@ export default function Home() {
 
               <div>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">処理ボタン</label>
-                {!isDemoMode && <button onClick={onSave} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">Query Engine更新</button>}
+                {!isDemoMode && <button onClick={onSave} disabled={isLoading} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">Query Engine更新</button>}
                 {putQueryMessage && <p className="text-red-500">{putQueryMessage}</p>}
                 <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">入力した内容をQuery Engineに書き込みます。</p>
+                {putQueryCompletMessage && <p className="text-blue-500">{putQueryCompletMessage}</p>}
               </div>
             </div>
 
@@ -662,13 +699,15 @@ export default function Home() {
                       </div>
                       <div>
                         <input type="file" accept=".png, .jpg, .jpeg" className="mb-2 w-[300px] inline-block text-sm text-gray-800 sm:text-base" onChange={changeFeedAvatar} />
-                        <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。現在の仕様上、画像を都度アップロードしていただくようお願いします。</p>
                       </div>
 
-                      <button onClick={onPublishFeed} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 md:text-base">公開</button>
-                      {publishMessage && <p className="text-red-500">{publishMessage}</p>}
+                      <button onClick={onPublishFeed} disabled={isLoading} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">公開</button>
+                      <p className="text-xs text-gray-400 dark:text-gray-600">処理に時間がかかるので、一度押したらそのままお待ちください。</p>
+                      <button onClick={onDeleteFeed} disabled={isLoading} className="block rounded-lg bg-red-800 px-8 py-3 text-center text-sm text-white outline-none ring-red-300 transition duration-100 hover:bg-red-700 focus-visible:ring active:bg-red-600 disabled:bg-red-100 md:text-base">公開の取り下げ</button>
                       <p className="text-xs text-gray-400 dark:text-gray-600">「公開」したカスタムフィードを削除します。プロフィールから非表示になります。Query Engineのサーバーは消えませんので、ご自身で削除ください。</p>
-                      <button onClick={onDeleteFeed} className="block rounded-lg bg-red-800 px-8 py-3 text-center text-sm text-white outline-none ring-red-300 transition duration-100 hover:bg-red-700 focus-visible:ring active:bg-red-600 md:text-base">公開の取り下げ</button>
+                      {publishMessage && <p className="text-red-500">{publishMessage}</p>}
+                      {publishCompleteMessage && <p className="text-blue-500">{publishCompleteMessage}</p>}
                     </div>
 
                   </div>
