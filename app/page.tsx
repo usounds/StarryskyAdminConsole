@@ -166,6 +166,7 @@ export default function Home() {
           setIsDemoMode(false)
           setIsNewMode(false)
           setIsRestoreFromD1(false)
+          setIsCanPublish(true)
 
         // Query Engineにデータがない
         } else if (result === 'NOT_FOUND') {
