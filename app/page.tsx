@@ -921,8 +921,8 @@ export default function Home() {
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                           {posts ?
-                            posts.map((post: Post) => (
-                              <tr>
+                            posts.map((post: Post, index) => (
+                              <tr key={index}>
                                 <td className="px-6 py-2 break-words whitespace-pre-wrap text-xs font-medium text-gray-800 dark:text-gray-800">{post.DisplayName}</td>
                                 <td className="px-6 py-2 break-words whitespace-pre-wrap text-xs text-gray-800 dark:text-gray-800">{post.Time}</td>
                                 <td className="px-6 py-2 break-words whitespace-pre-wrap text-xs text-gray-800 dark:text-gray-800">{post.Text}</td>
