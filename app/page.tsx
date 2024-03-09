@@ -915,23 +915,20 @@ export default function Home() {
                         <thead>
                           <tr>
                             <th scope="col" className="w-1/8 px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">Name</th>
-                            <th scope="col" className="w-1/8 px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">Time</th>
-                            <th scope="col" className="w-6/8 px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">Text</th>
+                            <th scope="col" className="w-7/8 px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">Text</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                           {posts ?
                             posts.map((post: Post, index) => (
                               <tr key={index}>
-                                <td className="px-6 py-2 break-words whitespace-pre-wrap text-xs font-medium text-gray-800 dark:text-gray-800">{post.DisplayName}</td>
-                                <td className="px-6 py-2 break-words whitespace-pre-wrap text-xs text-gray-800 dark:text-gray-800">{post.Time}</td>
+                                <td className="px-6 py-2 break-words whitespace-pre-wrap text-xs font-medium text-gray-800 dark:text-gray-800">{post.DisplayName}<br/>{post.Time}</td>
                                 <td className="px-6 py-2 break-words whitespace-pre-wrap text-xs text-gray-800 dark:text-gray-800">{post.Text}</td>
                               </tr>
                             ))
                             :
                             <tr>
                               <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-gray-800">データ無し</td>
-                              <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-800 dark:text-gray-800">データ無し</td>
                               <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-800 dark:text-gray-800">データ無し</td>
                             </tr>}</tbody>
                       </table>
