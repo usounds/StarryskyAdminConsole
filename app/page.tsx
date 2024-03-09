@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { useCallback, useRef, useState } from 'react';
 import { TextareaAutosize } from '@mui/base';
 import { BskyAgent,BlobRef } from '@atproto/api'
+import { cookies } from 'next/headers'
 
 const agent = new BskyAgent({ service: 'https://bsky.social' })
 
@@ -17,13 +18,13 @@ export default function Home() {
   const [publishMessage, setPublishMessage] = useState("");
   const [publishCompleteMessage, setPublishCompleteMessage] = useState("");
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [isServerEditable, setIsServerEditable] = useState(true);
-  const [isCanPublish, setIsCanPublish] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  const [isNewMode, setIsNewMode] = useState(false);
-  const [isMemoryMode, setIsMemoryMode] = useState(false);
-  const [isRestoreFromD1, setIsRestoreFromD1] = useState(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isServerEditable, setIsServerEditable] = useState<boolean>(true);
+  const [isCanPublish, setIsCanPublish] = useState<boolean>(false);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
+  const [isNewMode, setIsNewMode] = useState<boolean>(false);
+  const [isMemoryMode, setIsMemoryMode] = useState<boolean>(false);
+  const [isRestoreFromD1, setIsRestoreFromD1] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const [key, setKey] = useState("");
@@ -73,9 +74,10 @@ export default function Home() {
   }
 
   const onDemoMode = async (): Promise<void> => {
-    setLoginMessage('')
+    deleteMessage()
     setIsDemoMode(true)
     setIsEditing(true)
+    setIsLoading(false)
   }
 
   const onLoad = async (): Promise<void> => {
@@ -198,6 +200,7 @@ export default function Home() {
               setFeedName(record.feedName)
               setFeedDescription(record.feedDescription)
               setPrivateFeed(record.privateFeed)
+              setRecordCount('')
               setLimitCount(record.limitCount.toString())
               setIsRestoreFromD1(true)
             }else{
@@ -216,6 +219,7 @@ export default function Home() {
               setPinnedPost('')
               setLastExecTime('')
               setLimitCount('500')
+              setRecordCount('')
               setFeedName('')
               setFeedDescription('')
               setPrivateFeed('')
@@ -327,20 +331,6 @@ export default function Home() {
 
     let avatarRef: BlobRef | undefined
     let encoding: string = ''
-
-    if(blueskyHandle===''){
-      setPublishMessage('Bluesky Handleは必須です')
-      setIsLoading(false)
-      return
-
-    }
-
-    if(blueskyAppPassword===''){
-      setPublishMessage('Bluesky App Passwordは必須です')
-      setIsLoading(false)
-      return
-
-    }
     
     if (feedAvatar?.name.endsWith('png')) {
       encoding = 'image/png'
@@ -466,13 +456,13 @@ export default function Home() {
               {!isEditing &&
                 <div>
                   <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Server URL</label>
-                  <input autoComplete='username' value={serverUrl} onChange={(event) => setServerUrl(event.target.value)} placeholder="YOURSERVER.com" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                  <input autoComplete='username' required value={serverUrl} onChange={(event) => setServerUrl(event.target.value)} placeholder="YOURSERVER.com" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 </div>
               }
               {!isEditing &&
                 <div>
                   <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Web Pass Keyword</label>
-                  <input autoComplete='username' type="password" value={webPassKey} onChange={(event) => setWebPassKey(event.target.value)} placeholder="EDIT_WEB_PASSKEYの設定値" name="password" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                  <input autoComplete='username' required type="password" value={webPassKey} onChange={(event) => setWebPassKey(event.target.value)} placeholder="EDIT_WEB_PASSKEYの設定値" name="password" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                 </div>
               }
               <div>
@@ -700,13 +690,13 @@ export default function Home() {
                       </div>
                       <div>
                         <input type="file" accept=".png, .jpg, .jpeg" className="mb-2 w-[300px] inline-block text-sm text-gray-800 sm:text-base" onChange={changeFeedAvatar} />
-                        <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。現在の仕様上、画像を都度アップロードしていただくようお願いします。</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。現在の仕様上、公開する際は都度画像をアップロードしていただくようお願いします。</p>
                       </div>
 
                       <button onClick={onPublishFeed} disabled={isLoading} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">公開</button>
                       <p className="text-xs text-gray-400 dark:text-gray-600">処理に時間がかかるので、一度押したらそのままお待ちください。</p>
                       <button onClick={onDeleteFeed} disabled={isLoading} className="block rounded-lg bg-red-800 px-8 py-3 text-center text-sm text-white outline-none ring-red-300 transition duration-100 hover:bg-red-700 focus-visible:ring active:bg-red-600 disabled:bg-red-100 md:text-base">公開の取り下げ</button>
-                      <p className="text-xs text-gray-400 dark:text-gray-600">「公開」したカスタムフィードを削除します。プロフィールから非表示になります。Query Engineのサーバーは消えませんので、ご自身で削除ください。</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-600">「公開」したカスタムフィードがプロフィールから非表示になります。Query Engineのサーバーは消えませんので、ご自身で削除ください。</p>
                       {publishMessage && <p className="text-red-500">{publishMessage}</p>}
                       {publishCompleteMessage && <p className="text-blue-500">{publishCompleteMessage}</p>}
                     </div>

@@ -4,6 +4,7 @@ export const runtime = 'edge';
 export async function POST(request: Request) {
     console.log('getQuery')
     const { serverUrl,key } = (await request.json()) as { serverUrl: string, key:string }
+    console.log(serverUrl + ':' + key)
 
     const requestJson = {
         key : key
@@ -21,8 +22,6 @@ export async function POST(request: Request) {
 
 
     const aaa = await result.json()
-
-    console.log(aaa)
 
     return new Response(JSON.stringify(aaa), {
         status: result.status,

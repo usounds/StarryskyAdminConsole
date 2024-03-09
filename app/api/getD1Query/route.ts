@@ -3,14 +3,6 @@ export const runtime = 'edge'
 
 export async function POST(request: Request) {
   console.log('getD1Query')
-  /*
-  if(process.env.NODE_ENV==='production' && request.headers.get('origin')!=='https://starrysky-console.pages.dev'){
-    return new Response('error', {
-        status: 500
-    })
-  }
-  */
-
   const { serverUrl,key } = (await request.json()) as { serverUrl: string, key:string }
   console.log(serverUrl + ':' + key)
 	const { env } = getRequestContext()
