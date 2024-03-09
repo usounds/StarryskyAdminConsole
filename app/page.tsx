@@ -1,13 +1,15 @@
 "use client"
 export const runtime = 'edge';
-import { useCallback, useRef, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TextareaAutosize } from '@mui/base';
-import { BskyAgent,BlobRef } from '@atproto/api'
-import { cookies } from 'next/headers'
+import { BskyAgent, BlobRef } from '@atproto/api'
+import { setCookie, getCookie } from 'cookies-next'
 
 const agent = new BskyAgent({ service: 'https://bsky.social' })
 
 export default function Home() {
+
+  const [enabled, setEnabled] = useState(false)
   const [serverUrl, setServerUrl] = useState("https://");
   const [webPassKey, setWebPassKey] = useState("");
   const [editFeed, setEditFeed] = useState("starrysky01");
@@ -17,6 +19,7 @@ export default function Home() {
   const [putQueryCompletMessage, setPutCompletQueryMessage] = useState("");
   const [publishMessage, setPublishMessage] = useState("");
   const [publishCompleteMessage, setPublishCompleteMessage] = useState("");
+  const [blueskyLoginMessage, setBlueskyLoginMessage] = useState("");
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isServerEditable, setIsServerEditable] = useState<boolean>(true);
@@ -26,6 +29,8 @@ export default function Home() {
   const [isMemoryMode, setIsMemoryMode] = useState<boolean>(false);
   const [isRestoreFromD1, setIsRestoreFromD1] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isBlueskyLogin, setIsBlueskyLogin] = useState<boolean>(false)
+  const [isSaveCookie, setIsSaveCookie] = useState<boolean>(false)
 
   const [key, setKey] = useState("");
   const [recordName, setRecordName] = useState("");
@@ -52,6 +57,33 @@ export default function Home() {
 
   const [feedAvatarImg, setFeedAvatarImg] = useState('')
 
+
+
+  useEffect(() => {
+    (async function () {
+      try {
+        const blueskyHandle = getCookie('bluesky-handle')
+        if (blueskyHandle) setBlueskyHandle(blueskyHandle)
+        const blueskyAppPass = getCookie('bluesky-app-password')
+        if (blueskyAppPass) setBlueskyAppPassword(blueskyAppPass)
+        const serverUrl = getCookie('server-url')
+        if (serverUrl) setServerUrl(serverUrl)
+        const webPasskey = getCookie('web-passkey')
+        if (webPasskey) setWebPassKey(webPasskey)
+
+        if(blueskyHandle && blueskyAppPass){
+          await agent.login({ identifier: blueskyHandle, password: blueskyAppPass })
+          setIsBlueskyLogin(true)
+        }
+
+
+      } catch(e) {
+        setBlueskyLoginMessage('エラーが発生しました:'+e)
+      }
+    })();
+  }, [])
+
+
   interface Conditions {
     serverUrl: string;
     key: string;
@@ -70,7 +102,7 @@ export default function Home() {
     feedDescription: string;
     limitCount: number;
     privateFeed: string;
-    includeAltText:string;
+    includeAltText: string;
   }
 
   const onDemoMode = async (): Promise<void> => {
@@ -106,40 +138,49 @@ export default function Home() {
 
     const requestOptions = {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'x-starrtsky-webpasskey':webPassKey },
+        'x-starrtsky-webpasskey': webPassKey
+      },
       body: JSON.stringify({ serverUrl: paramServerURL, key: editFeed })
     };
 
     try {
       const res = await fetch('/api/getQuery', requestOptions);
-      const resJson= await res.json()
+      const resJson = await res.json()
       console.log(resJson);
       if (res.status == 200) {
-        const {isMemoryMode,recordName,query,inputRegex,invertRegex,refresh,lang,labelDisable,replyDisable,imageOnly,includeAltText,initPost,
-          pinnedPost,lastExecTime,limitCount,feedName,feedDescription,privateFeed,recordCount,result} = (resJson) as { 
-          isMemoryMode:boolean,
-          recordName:string,
-          query:string,
-          inputRegex:string,
-          invertRegex:string,
-          refresh:string,
-          lang:string,
-          labelDisable:string,
-          replyDisable:string,
-          imageOnly:string,
-          includeAltText:string,
-          initPost:string,
-          pinnedPost:string,
-          lastExecTime:string,
-          limitCount:string,
-          feedName:string,
-          feedDescription:string,
-          privateFeed:string,
-          recordCount:string,
-          result:string
+
+        if(isSaveCookie){
+          setCookie('server-url',paramServerURL)
+          setCookie('web-passkey',webPassKey)
+
         }
+
+
+        const { isMemoryMode, recordName, query, inputRegex, invertRegex, refresh, lang, labelDisable, replyDisable, imageOnly, includeAltText, initPost,
+          pinnedPost, lastExecTime, limitCount, feedName, feedDescription, privateFeed, recordCount, result } = (resJson) as {
+            isMemoryMode: boolean,
+            recordName: string,
+            query: string,
+            inputRegex: string,
+            invertRegex: string,
+            refresh: string,
+            lang: string,
+            labelDisable: string,
+            replyDisable: string,
+            imageOnly: string,
+            includeAltText: string,
+            initPost: string,
+            pinnedPost: string,
+            lastExecTime: string,
+            limitCount: string,
+            feedName: string,
+            feedDescription: string,
+            privateFeed: string,
+            recordCount: string,
+            result: string
+          }
         setLoginMessage('')
 
         //Query Engineにデータがある
@@ -170,16 +211,16 @@ export default function Home() {
           setIsRestoreFromD1(false)
           setIsCanPublish(true)
 
-        // Query Engineにデータがない
+          // Query Engineにデータがない
         } else if (result === 'NOT_FOUND') {
           console.log('Query Engineデータなし')
           //D1から取得する
           const resD1 = await fetch('/api/getD1Query', requestOptions)
-          if(resD1.status==200){
+          if (resD1.status == 200) {
             const resD1Body = await resD1.json()
-            const {result,resultRecord} = (resD1Body) as { result:string, resultRecord:Conditions[]}
+            const { result, resultRecord } = (resD1Body) as { result: string, resultRecord: Conditions[] }
 
-            if(result==='OK'){
+            if (result === 'OK') {
               console.log('D1から復元')
               const record = resultRecord[0]
               console.log(record)
@@ -203,7 +244,7 @@ export default function Home() {
               setRecordCount('')
               setLimitCount(record.limitCount.toString())
               setIsRestoreFromD1(true)
-            }else{
+            } else {
               setKey(editFeed)
               setRecordName(editFeed)
               setQuery('')
@@ -245,22 +286,40 @@ export default function Home() {
     setIsLoading(false)
   }
 
+  const onBlueskyLogin = async (): Promise<void> => {
+    deleteMessage()
+    try {
+      if (!agent.hasSession) await agent.login({ identifier: blueskyHandle, password: blueskyAppPassword })
+      if(isSaveCookie){
+        setCookie('bluesky-handle', blueskyHandle)
+        setCookie('bluesky-app-password', blueskyAppPassword)
+      }
+      setIsBlueskyLogin(true)
+      setIsLoading(false)
+    } catch (e) {
+      setBlueskyLoginMessage('エラーが発生しました:'+e)
+      setIsLoading(false)
+      return
+    }
+
+  }
+
   const onSave = async (): Promise<void> => {
     deleteMessage()
 
-    if(recordName===''){
+    if (recordName === '') {
       setPutQueryMessage('Record Nameは必須です。Record Nameを入力してください。')
       setIsLoading(false)
       return
     }
 
-    if(query===''){
+    if (query === '') {
       setPutQueryMessage('Bluesky Queryは必須です。Bluesky Queryを入力してください。')
       setIsLoading(false)
       return
     }
 
-    if(inputRegex===''){
+    if (inputRegex === '') {
       setPutQueryMessage('Input Regexは必須です。Input Regexを入力してください。')
       setIsLoading(false)
       return
@@ -268,9 +327,10 @@ export default function Home() {
 
     const requestOptions = {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json',
-      'x-starrtsky-webpasskey':webPassKey 
-     },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-starrtsky-webpasskey': webPassKey
+      },
       body: JSON.stringify(
         {
           key: key,
@@ -297,11 +357,11 @@ export default function Home() {
 
     try {
       const res = await fetch('/api/setQuery', requestOptions);
-      const returnObject =  await res.json()
-      const {result,message} = (returnObject) as { result:string,message:string }
+      const returnObject = await res.json()
+      const { result, message } = (returnObject) as { result: string, message: string }
       if (res.status == 200) {
         //const ret = await res.json();
-        console.log(result+ ' : ' + message)
+        console.log(result + ' : ' + message)
         if (result === 'OK') {
           setPutQueryMessage('')
           setPutCompletQueryMessage('更新処理が完了しました')
@@ -331,12 +391,12 @@ export default function Home() {
 
     let avatarRef: BlobRef | undefined
     let encoding: string = ''
-    
+
     if (feedAvatar?.name.endsWith('png')) {
       encoding = 'image/png'
     } else if (feedAvatar?.name.endsWith('jpg') || feedAvatar?.name.endsWith('jpeg')) {
       encoding = 'image/jpeg'
-    } else if(feedAvatar!== undefined)  {
+    } else if (feedAvatar !== undefined) {
       setPublishMessage('ファイル形式はPNGかJPGです')
       setIsLoading(false)
       return
@@ -345,7 +405,7 @@ export default function Home() {
     try {
       if (!agent.hasSession) await agent.login({ identifier: blueskyHandle, password: blueskyAppPassword })
     } catch (e) {
-      setPublishMessage('エラーが発生しました：'+e)
+      setPublishMessage('エラーが発生しました：' + e)
       setIsLoading(false)
       return
     }
@@ -374,15 +434,15 @@ export default function Home() {
           createdAt: new Date().toISOString(),
         },
       })
-      if(ret.success){
+      if (ret.success) {
         setPublishCompleteMessage('更新処理が成功しました')
 
-      }else{
-        setPublishMessage('エラーが発生しました：'+await ret)
-        
+      } else {
+        setPublishMessage('エラーが発生しました：' + await ret)
+
       }
     } catch (e) {
-      setPublishMessage('エラーが発生しました：'+e)
+      setPublishMessage('エラーが発生しました：' + e)
 
     }
 
@@ -390,13 +450,14 @@ export default function Home() {
 
   }
 
-  function deleteMessage(){
+  function deleteMessage() {
     setIsLoading(true)
     setPublishCompleteMessage('')
     setPublishMessage('')
     setPutQueryMessage('')
     setLoginMessage('')
     setPutCompletQueryMessage('')
+    setBlueskyLoginMessage('')
 
   }
 
@@ -406,7 +467,7 @@ export default function Home() {
     try {
       if (!agent.hasSession) await agent.login({ identifier: blueskyHandle, password: blueskyAppPassword })
     } catch (e) {
-      setPublishMessage('エラーが発生しました：'+e)
+      setPublishMessage('エラーが発生しました：' + e)
       setIsLoading(false)
       return
     }
@@ -425,7 +486,7 @@ export default function Home() {
       )
       setPublishCompleteMessage('削除結果はBlueskyで確認してください')
     } catch (e) {
-      setPublishMessage('エラーが発生しました：'+e)
+      setPublishMessage('エラーが発生しました：' + e)
     }
 
     setIsLoading(false)
@@ -452,21 +513,28 @@ export default function Home() {
           }
 
           <div className="mx-auto max-w-lg rounded-lg border">
-            <div className="flex flex-col gap-4 p-4 md:p-8">
+            <div className="flex flex-col gap-2 p-2 md:p-4">
               {!isEditing &&
                 <div>
-                  <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Server URL</label>
-                  <input autoComplete='username' required value={serverUrl} onChange={(event) => setServerUrl(event.target.value)} placeholder="YOURSERVER.com" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+
+                  <div className="flex items-center mt-2 mb-2">
+                    <input checked={isSaveCookie} onChange={(event) => setIsSaveCookie(event.target.checked)}　id="remember-me" name="remember-me" type="checkbox" placeholder="Your password" className="w-4 h-4 text-blue-600 border-gray-200 rounded focus:ring-blue-500" />
+                    <label className="block ml-2 text-sm text-neutral-600"> 枠の中をクッキーに保存 </label>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-800 dark:text-gray-800">Query Engine URL</label>
+                    <input autoComplete='username' required value={serverUrl} onChange={(event) => setServerUrl(event.target.value)} placeholder="YOURSERVER.com" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-800 dark:text-gray-800">Web Pass Keyword</label>
+                    <input autoComplete='username' required type="password" value={webPassKey} onChange={(event) => setWebPassKey(event.target.value)} placeholder="EDIT_WEB_PASSKEYの設定値" name="password" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                  </div>
                 </div>
               }
-              {!isEditing &&
-                <div>
-                  <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Web Pass Keyword</label>
-                  <input autoComplete='username' required type="password" value={webPassKey} onChange={(event) => setWebPassKey(event.target.value)} placeholder="EDIT_WEB_PASSKEYの設定値" name="password" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-                </div>
-              }
+
               <div>
-                <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Edit Custom Feed</label>
+                <label className="block text-sm text-gray-800 dark:text-gray-800">Edit Custom Feed</label>
                 <select value={editFeed} onChange={(event) => { setEditFeed(event.target.value); setIsEditing(false); }} className="py-3 px-4 pe-9 border-2 block w-full bg-gray-50 ring-indigo-300 text-gray-800 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none ">
                   <option>starrysky01</option>
                   <option>starrysky02</option>
@@ -476,28 +544,49 @@ export default function Home() {
               <button onClick={onLoad} disabled={isLoading} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">読み込み</button>
               {!isEditing && <button onClick={onDemoMode} className="block rounded-lg bg-gray-800 px-8 py-3 text-center text-sm text-white outline-none ring-gray-300 transition duration-100 hover:bg-gray-700 focus-visible:ring active:bg-gray-600 md:text-base">デモモード</button>}
               {loginMessage && <p className="text-red-500">{loginMessage}</p>}
+
+              {!isBlueskyLogin &&
+                <div>
+                  <div>
+                    <label className="block text-sm text-gray-800 dark:text-gray-800">Bluesky Handle(プレビュー機能を使う場合は入力してください)</label>
+                    <input value={blueskyHandle} onChange={(event) => setBlueskyHandle(event.target.value)} placeholder="abcd.bsky.socials" name="bskyuername" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-800 dark:text-gray-800">Bluesky App Password(プレビュー機能を使う場合は入力してください)</label>
+                    <input value={blueskyAppPassword} type="password" onChange={(event) => setBlueskyAppPassword(event.target.value)} placeholder="zxcv-asdf-qwer" name="bskyapppassword" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                  </div>
+                  
+
+                </div>
+              }
+
+            {!isBlueskyLogin &&
+              <button onClick={onBlueskyLogin} disabled={isLoading} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">Blueskyにログイン</button>
+            }
+
+            {blueskyLoginMessage && <p className="text-red-500">{blueskyLoginMessage}</p>}
             </div>
 
           </div>
         </div>
       </div>
 
-            {isEditing &&
-              <div className="bg-white py-6 sm:py-8 lg:py-12">
-                <div className="mx-auto max-w-screen-2xl px-4 md:px-8">
+      {isEditing &&
+        <div className="bg-white py-6 sm:py-8 lg:py-12">
+          <div className="mx-auto max-w-screen-2xl px-4 md:px-8">
 
-                  
-                  {isNewMode &&
-                    <div className="mx-auto gap-4 mb-5">
-                      <div className="mx-auto max-w-screen-2xl px-4">
-                        <div className="flex flex-col items-center rounded-lg bg-gray-100 p-2 sm:p-4">
-                          <p className="text-center text-gray-500">Query Engineに{key}は登録されていません。新規登録を行います。</p>
-                        </div>
-                      </div>
-                    </div>
-                  }
 
-                  
+            {isNewMode &&
+              <div className="mx-auto gap-4 mb-5">
+                <div className="mx-auto max-w-screen-2xl px-4">
+                  <div className="flex flex-col items-center rounded-lg bg-gray-100 p-2 sm:p-4">
+                    <p className="text-center text-gray-500">Query Engineに{key}は登録されていません。新規登録を行います。</p>
+                  </div>
+                </div>
+              </div>
+            }
+
+
             {isRestoreFromD1 &&
               <div className="mx-auto gap-4 mb-5">
                 <div className="mx-auto max-w-screen-2xl px-4">
@@ -680,14 +769,6 @@ export default function Home() {
                   <div className="mx-auto max-w-lg rounded-lg border">
                     <div className="flex flex-col gap-4 p-4 md:p-4">
                       <p className="text-xs text-gray-400 dark:text-gray-600">作成した後にBlueskyのアプリからカスタムフィードを参照できるようにするには「公開」が必要です。一同公開すれば、説明文やアイコンを変更したい場合を除き、再度公開する必要はありません。</p>
-                      <div>
-                        <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Bluesky Handle</label>
-                        <input value={blueskyHandle} onChange={(event) => setBlueskyHandle(event.target.value)} placeholder="abcd.bsky.socials" name="bskyuername" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-                      </div>
-                      <div>
-                        <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">Bluesky App Password</label>
-                        <input value={blueskyAppPassword} type="password" onChange={(event) => setBlueskyAppPassword(event.target.value)} placeholder="zxcv-asdf-qwer" name="bskyapppassword" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
-                      </div>
                       <div>
                         <input type="file" accept=".png, .jpg, .jpeg" className="mb-2 w-[300px] inline-block text-sm text-gray-800 sm:text-base" onChange={changeFeedAvatar} />
                         <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。現在の仕様上、公開する際は都度画像をアップロードしていただくようお願いします。</p>
