@@ -2,9 +2,9 @@
 export const runtime = 'edge';
 import { useState, useEffect } from 'react'
 import { TextareaAutosize } from '@mui/base'
-import { BskyAgent, BlobRef,AtpSessionData } from '@atproto/api'
+import { BskyAgent, BlobRef } from '@atproto/api'
 import { setCookie, getCookie } from 'cookies-next'
-import dayjs, { extend,locale } from 'dayjs'
+import dayjs, { extend, locale } from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/ja';
 
@@ -74,18 +74,18 @@ export default function Home() {
 
         const blueskySession = getCookie('bluesky-session')
 
-        if(blueskySession && !agent.hasSession){
+        if (blueskySession && !agent.hasSession) {
           console.log('resumeSessionよぶ')
           const blueskySessionJson = JSON.parse(blueskySession)
           const sessionObj = {
             refreshJwt: blueskySessionJson.refreshJwt,
-            accessJwt:blueskySessionJson.accessJwt,
-            handle:blueskySessionJson.handle,
-            did:blueskySessionJson.did
+            accessJwt: blueskySessionJson.accessJwt,
+            handle: blueskySessionJson.handle,
+            did: blueskySessionJson.did
           }
           await agent.resumeSession(sessionObj)
           setIsBlueskyLogin(true)
-        }else if(blueskyHandle && blueskyAppPass && !agent.hasSession ) {
+        } else if (blueskyHandle && blueskyAppPass && !agent.hasSession) {
           console.log('loginよぶ')
           await agent.login({ identifier: blueskyHandle, password: blueskyAppPass })
           setIsBlueskyLogin(true)
@@ -100,21 +100,31 @@ export default function Home() {
 
   type Post = {
     DisplayName: string;
+    Avater: string;
+    Handle: string;
     Text: string;
     Time: string;
+    Image: imageObject[];
   }
 
-  interface record {
-    createdAt: string,
-    text?: string,
-    langs?: string[],
-    reply: {},
+  type record = {
+    createdAt: string
+    text?: string
+    langs?: string[]
+    reply: {}
     embed?: {
-      images?: [{
-        alt?: String
-      }
-      ]
+      images?: imageObject[]
     }
+  }
+
+  type imageObject = {
+    alt:string
+    aspectRatio:{
+      height:number
+      width:number
+    }
+    fullsize:string
+    thumb:string
   }
 
   interface Conditions {
@@ -513,6 +523,7 @@ export default function Home() {
 
       for (let post of seachResults.data.posts) {
         const record = post.record as record
+
         let text = record.text || ''
 
         if (includeAltText === "true" && record.embed !== undefined && record.embed.images !== undefined) {
@@ -554,21 +565,23 @@ export default function Home() {
           continue
         }
 
-        const dateObj = Date.parse (post.indexedAt) 
-        
+        const dateObj = Date.parse(post.indexedAt)
 
         resultPosts.push({
           DisplayName: post.author.displayName || '',
           Text: text,
-          Time: dayjs(dateObj).fromNow()
+          Time: dayjs(dateObj).fromNow(),
+          Avater: post.author.avatar || '',
+          Handle: post.author.handle,
+          Image: post.embed?.images as imageObject[]
         })
       }
 
+
       const endTime = Date.now(); // 終了時間
-      setPreviewMessage((endTime - startTime)+'ms')
+      setPreviewMessage((endTime - startTime) + 'ms')
 
       setPosts(resultPosts)
-
       setIsLoading(false)
     } catch (e) {
       setPreviewMessage('エラーが発生しました:' + e)
@@ -582,7 +595,7 @@ export default function Home() {
     return [...arr1, ...arr2].filter(item => arr1.includes(item) && arr2.includes(item)).length > 0
   }
 
-  function onPreviewReset(){
+  function onPreviewReset() {
     setPosts(null)
   }
 
@@ -894,49 +907,54 @@ export default function Home() {
 
               <div>
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">処理ボタン</label>
-                {!isDemoMode && <button onClick={onSave} disabled={isLoading} className="block w-full rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">Query Engine更新</button>}
-                {putQueryMessage && <p className="text-red-500">{putQueryMessage}</p>}
-                <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">入力した内容をQuery Engineに書き込みます。</p>
-                {putQueryCompletMessage && <p className="text-blue-500">{putQueryCompletMessage}</p>}
 
-                <button onClick={onPreview} disabled={isLoading} className="block mb-2 rounded-lg w-full bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">プレビュー</button>
-                <button onClick={onPreviewReset} disabled={isLoading} className="block mb-2 rounded-lg w-full bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">プレビュー非表示</button>
+                <button onClick={onPreview} disabled={isLoading} className="block mt-2 mb-2 rounded-lg w-full bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">プレビュー</button>
+                <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">入力した検索条件の結果を表示します。</p>
+                {posts && <button onClick={onPreviewReset} disabled={isLoading} className="block mt-2 mb-2 rounded-lg w-full bg-gray-800 px-8 py-3 text-center text-sm text-white outline-none ring-gray-300 transition duration-100 hover:bg-gray-700 focus-visible:ring active:bg-gray-600 disabled:bg-gray-100 md:text-base">プレビュー非表示</button>}
                 {previewMessage && <p className="text-red-500">{previewMessage}</p>}
+
+                {!isDemoMode && <button onClick={onSave} disabled={isLoading} className="mt-4 block w-full rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">Query Engine更新</button>}
+                {putQueryMessage && <p className="text-red-500">{putQueryMessage}</p>}
+                {!isDemoMode && <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">入力した内容をQuery Engineに書き込みます。</p>}
+                {putQueryCompletMessage && <p className="text-blue-500">{putQueryCompletMessage}</p>}
               </div>
             </div>
 
+
             {posts &&
-              <div className="flex flex-col">
-                <div className='text-gray-800'>プレビュー</div>
-                <div className="-m-1.5 overflow-x-auto">
-                  <div className="p-1.5 min-w-full inline-block align-middle">
-                    <div className="overflow-hidden">
-                      <table className="table-fixed min-w-full divide-y divide-gray-200 dark:divide-gray-700 table-auto">
-                        <thead>
-                          <tr>
-                            <th scope="col" className="w-1/8 px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">Name</th>
-                            <th scope="col" className="w-7/8 px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">Text</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                          {posts ?
-                            posts.map((post: Post, index) => (
-                              <tr key={index}>
-                                <td className="px-6 py-2 break-words whitespace-pre-wrap text-xs font-medium text-gray-800 dark:text-gray-800">{post.DisplayName}<br/>{post.Time}</td>
-                                <td className="px-6 py-2 break-words whitespace-pre-wrap text-xs text-gray-800 dark:text-gray-800">{post.Text}</td>
-                              </tr>
-                            ))
-                            :
-                            <tr>
-                              <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-gray-800">データ無し</td>
-                              <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-800 dark:text-gray-800">データ無し</td>
-                            </tr>}</tbody>
-                      </table>
+              posts.map((post: Post, index) => (
+                <div className="rounded-lg border mb-1 max-w-screen-md mx-auto" key={index}>
+                  <div className="flex flex-shrink-0 p-2 pb-0 ">
+                    <div className="flex items-center">
+                      <div>
+                        <img className="inline-block h-8 w-8 rounded-full" src={post.Avater} alt="" />
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-base leading-6 font-medium text-gray-600">
+                          {post.DisplayName}
+                          <span className="text-sm leading-5 font-medium text-gray-400 group-hover:text-gray-300 transition ease-in-out duration-150 ml-">
+                            @{post.Handle} . {post.Time}
+                          </span>
+                        </p>
+                      </div>
                     </div>
                   </div>
+                  <div className="pl-14 pb-2">
+                    <p className="width-auto text-sm text-gray-800 flex-shrink ">
+                      {post.Text}
+                    </p>
+
+                    <div className='flex'>
+                    {post.Image && post.Image.map((imageRef: imageObject, index2) => (
+                        <div className="w-96  m-1 p-1">
+                          <img  src={imageRef.thumb}  key={index2}  alt={imageRef.alt} />
+                        </div >
+                    ))}
+                    </div>
+
+                  </div>
                 </div>
-              </div>
-            }
+              ))}
 
             {isCanPublish &&
               <div className="bg-white py-4 sm:py-4 lg:py-4">
