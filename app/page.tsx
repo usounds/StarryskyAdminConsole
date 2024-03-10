@@ -505,81 +505,88 @@ export default function Home() {
       //取得済みポストを消す
 
       const startTime = Date.now(); // 開始時間
-
-      //検索APIを実行する
-      const params_search = {
-        q: query,
-        limit: 100
-      }
-      const seachResults = await agent.api.app.bsky.feed.searchPosts(params_search)
+      let cursor = 0
       let resultPosts: Post[] = []
 
-      locale('ja')
-      extend(relativeTime)
+      do{
 
-      const inputRegexExp = new RegExp(inputRegex, 'i')  //抽出正規表現
-      const invertRegexExp = new RegExp(invertRegex, 'i') //除外用正規表現
-      const langObj = lang?.split(',')                     //言語フィルタ用配列
+        //検索APIを実行する
+        const params_search = {
+          q: query,
+          limit: 100,
+          cursor: String(cursor)
+        }
+        const seachResults = await agent.api.app.bsky.feed.searchPosts(params_search)
 
-      for (let post of seachResults.data.posts) {
-        const record = post.record as record
+        cursor = Number(seachResults.data.cursor)
 
-        let text = record.text || ''
+        locale('ja')
+        extend(relativeTime)
 
-        if (includeAltText === "true" && record.embed !== undefined && record.embed.images !== undefined) {
-          for (let image of record.embed.images) {
-            text = text + '\n' + image.alt
+        const inputRegexExp = new RegExp(inputRegex, 'i')  //抽出正規表現
+        const invertRegexExp = new RegExp(invertRegex, 'i') //除外用正規表現
+        const langObj = lang?.split(',')                     //言語フィルタ用配列
+
+        for (let post of seachResults.data.posts) {
+          const record = post.record as record
+
+          let text = record.text || ''
+
+          if (includeAltText === "true" && record.embed !== undefined && record.embed.images !== undefined) {
+            for (let image of record.embed.images) {
+              text = text + '\n' + image.alt
+            }
           }
+
+          //INPUTにマッチしないものは除外
+          if (!text.match(inputRegexExp)) {
+            continue
+          }
+
+          //Invertにマッチしたものは除外
+          if (invertRegex !== '' && text.match(invertRegexExp)) {
+            continue
+          }
+
+          //画像フィルタ
+          if (imageOnly === 'true' && record.embed?.images === undefined) {
+            continue
+          }
+
+          //言語フィルターが有効化されているか
+          if (langObj !== undefined && langObj[0] !== "") {
+            //投稿の言語が未設定の場合は除外
+            if (record.langs === undefined) continue
+            //言語が一致しない場合は除外
+            if (!getIsDuplicate(record.langs, langObj)) continue
+          }
+
+          //ラベルが有効な場合は、ラベルが何かついていたら除外
+          if (labelDisable === "true" && post.labels?.length !== 0) {
+            continue
+          }
+
+          //リプライ無効の場合は、リプライを除外
+          if (replyDisable === "true" && record.reply !== undefined) {
+            continue
+          }
+
+          const dateObj = Date.parse(post.indexedAt)
+
+          resultPosts.push({
+            DisplayName: post.author.displayName || '',
+            Text: text,
+            Time: dayjs(dateObj).fromNow(),
+            Avater: post.author.avatar || '',
+            Handle: post.author.handle,
+            Image: post.embed?.images as imageObject[]
+          })
         }
-
-        //INPUTにマッチしないものは除外
-        if (!text.match(inputRegexExp)) {
-          continue
-        }
-
-        //Invertにマッチしたものは除外
-        if (invertRegex !== '' && text.match(invertRegexExp)) {
-          continue
-        }
-
-        //画像フィルタ
-        if (imageOnly === 'true' && record.embed?.images === undefined) {
-          continue
-        }
-
-        //言語フィルターが有効化されているか
-        if (langObj !== undefined && langObj[0] !== "") {
-          //投稿の言語が未設定の場合は除外
-          if (record.langs === undefined) continue
-          //言語が一致しない場合は除外
-          if (!getIsDuplicate(record.langs, langObj)) continue
-        }
-
-        //ラベルが有効な場合は、ラベルが何かついていたら除外
-        if (labelDisable === "true" && post.labels?.length !== 0) {
-          continue
-        }
-
-        //リプライ無効の場合は、リプライを除外
-        if (replyDisable === "true" && record.reply !== undefined) {
-          continue
-        }
-
-        const dateObj = Date.parse(post.indexedAt)
-
-        resultPosts.push({
-          DisplayName: post.author.displayName || '',
-          Text: text,
-          Time: dayjs(dateObj).fromNow(),
-          Avater: post.author.avatar || '',
-          Handle: post.author.handle,
-          Image: post.embed?.images as imageObject[]
-        })
-      }
+      }while(resultPosts.length < 100 && cursor%100==0)
 
 
       const endTime = Date.now(); // 終了時間
-      setPreviewMessage((endTime - startTime) + 'ms')
+      setPreviewMessage(resultPosts.length+'件: ' + (endTime - startTime) + 'ms')
 
       setPosts(resultPosts)
       setIsLoading(false)
@@ -596,6 +603,7 @@ export default function Home() {
   }
 
   function onPreviewReset() {
+    setPreviewMessage('')
     setPosts(null)
   }
 
@@ -909,13 +917,13 @@ export default function Home() {
                 <label className="mb-2 inline-block text-sm text-gray-800 sm:text-base">処理ボタン</label>
 
                 <button onClick={onPreview} disabled={isLoading} className="block mt-2 mb-2 rounded-lg w-full bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">プレビュー</button>
-                <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">入力した検索条件の結果を表示します。</p>
-                {posts && <button onClick={onPreviewReset} disabled={isLoading} className="block mt-2 mb-2 rounded-lg w-full bg-gray-800 px-8 py-3 text-center text-sm text-white outline-none ring-gray-300 transition duration-100 hover:bg-gray-700 focus-visible:ring active:bg-gray-600 disabled:bg-gray-100 md:text-base">プレビュー非表示</button>}
                 {previewMessage && <p className="text-red-500">{previewMessage}</p>}
+                <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">入力した検索条件の結果を表示します。100件を超したら処理を止めます。ピッタリ100件にはなりません。処理時間は参考値で、Query Engineの実際の処理時間とは異なります。</p>
+                {posts && <button onClick={onPreviewReset} disabled={isLoading} className="fixed z-50 bottom-10 right-10 block mt-2 mb-2 rounded-lg  bg-gray-800 px-8 py-3 text-center text-sm text-white outline-none ring-gray-300 transition duration-100 hover:bg-gray-700 focus-visible:ring active:bg-gray-600 disabled:bg-gray-100 md:text-base">プレビュー非表示</button>}
 
                 {!isDemoMode && <button onClick={onSave} disabled={isLoading} className="mt-4 block w-full rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">Query Engine更新</button>}
                 {putQueryMessage && <p className="text-red-500">{putQueryMessage}</p>}
-                {!isDemoMode && <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">入力した内容をQuery Engineに書き込みます。</p>}
+                {!isDemoMode && <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">入力した検索条件をQuery Engineに書き込みます。</p>}
                 {putQueryCompletMessage && <p className="text-blue-500">{putQueryCompletMessage}</p>}
               </div>
             </div>
@@ -923,7 +931,7 @@ export default function Home() {
 
             {posts &&
               posts.map((post: Post, index) => (
-                <div className="rounded-lg border mb-1 max-w-screen-md mx-auto" key={index}>
+                <div className="rounded-lg border mt-2 mb-1 max-w-screen-md mx-auto" key={index}>
                   <div className="flex flex-shrink-0 p-2 pb-0 ">
                     <div className="flex items-center">
                       <div>
@@ -933,7 +941,7 @@ export default function Home() {
                         <p className="text-base leading-6 font-medium text-gray-600">
                           {post.DisplayName}
                           <span className="text-sm leading-5 font-medium text-gray-400 group-hover:text-gray-300 transition ease-in-out duration-150 ml-">
-                            @{post.Handle} . {post.Time}
+                            @{post.Handle} {post.Time}
                           </span>
                         </p>
                       </div>
@@ -944,10 +952,10 @@ export default function Home() {
                       {post.Text}
                     </p>
 
-                    <div className='flex'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2'>
                     {post.Image && post.Image.map((imageRef: imageObject, index2) => (
-                        <div className="w-96  m-1 p-1" key={index2} >
-                          <img src={imageRef.thumb} height={imageRef.aspectRatio.height} width={imageRef.aspectRatio.width}  alt={imageRef.alt} />
+                        <div className="m-1 p-1" key={index2} >
+                          <img src={imageRef.thumb}  alt={imageRef.alt} />
                         </div >
                     ))}
                     </div>
