@@ -7,6 +7,7 @@ import { setCookie, getCookie } from 'cookies-next'
 import dayjs, { extend, locale } from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/ja';
+import Image from "next/image";
 
 const agent = new BskyAgent({ service: 'https://bsky.social' })
 
@@ -927,7 +928,7 @@ export default function Home() {
                   <div className="flex flex-shrink-0 p-2 pb-0 ">
                     <div className="flex items-center">
                       <div>
-                        <img className="inline-block h-8 w-8 rounded-full" src={post.Avater} alt="" />
+                        <Image className="inline-block h-8 w-8 rounded-full" src={post.Avater} alt="" />
                       </div>
                       <div className="ml-3">
                         <p className="text-base leading-6 font-medium text-gray-600">
@@ -946,8 +947,8 @@ export default function Home() {
 
                     <div className='flex'>
                     {post.Image && post.Image.map((imageRef: imageObject, index2) => (
-                        <div className="w-96  m-1 p-1">
-                          <img  src={imageRef.thumb}  key={index2}  alt={imageRef.alt} />
+                        <div className="w-96  m-1 p-1" key={index2} >
+                          <Image src={imageRef.thumb} height={imageRef.aspectRatio.height} width={imageRef.aspectRatio.width}  alt={imageRef.alt} />
                         </div >
                     ))}
                     </div>
