@@ -31,7 +31,7 @@ export default function Home() {
   const [isRestoreFromD1, setIsRestoreFromD1] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isBlueskyLogin, setIsBlueskyLogin] = useState<boolean>(false)
-  const [isSaveCookie, setIsSaveCookie] = useState<boolean>(false)
+  //const [isSaveCookie, setIsSaveCookie] = useState<boolean>(false)
 
   const [key, setKey] = useState("");
   const [recordName, setRecordName] = useState("");
@@ -63,10 +63,6 @@ export default function Home() {
   useEffect(() => {
     (async function () {
       try {
-        const blueskyHandle = getCookie('bluesky-handle')
-        if (blueskyHandle) setBlueskyHandle(blueskyHandle)
-        const blueskyAppPass = getCookie('bluesky-app-password')
-        if (blueskyAppPass) setBlueskyAppPassword(blueskyAppPass)
         const serverUrl = getCookie('server-url')
         if (serverUrl) setServerUrl(serverUrl)
         const webPasskey = getCookie('web-passkey')
@@ -84,10 +80,6 @@ export default function Home() {
             did: blueskySessionJson.did
           }
           await agent.resumeSession(sessionObj)
-          setIsBlueskyLogin(true)
-        } else if (blueskyHandle && blueskyAppPass && !agent.hasSession) {
-          console.log('loginよぶ')
-          await agent.login({ identifier: blueskyHandle, password: blueskyAppPass })
           setIsBlueskyLogin(true)
         }
         setIsLoading(false)
@@ -107,10 +99,11 @@ export default function Home() {
     Text: string;
     Time: string;
     Image: imageObject[];
+    IsReply: boolean;
   }
 
   type record = {
-    createdAt: string
+    indexedAt: string
     text?: string
     langs?: string[]
     reply: {}
@@ -195,14 +188,10 @@ export default function Home() {
     try {
       const res = await fetch('/api/getQuery', requestOptions);
       const resJson = await res.json()
-      console.log(resJson);
       if (res.status == 200) {
 
-        if (isSaveCookie) {
-          setCookie('server-url', paramServerURL)
-          setCookie('web-passkey', webPassKey)
-
-        }
+        setCookie('server-url', paramServerURL)
+        setCookie('web-passkey', webPassKey)
 
         const { isMemoryMode, recordName, query, inputRegex, invertRegex, refresh, lang, labelDisable, replyDisable, imageOnly, includeAltText, initPost,
           pinnedPost, lastExecTime, limitCount, feedName, feedDescription, privateFeed, recordCount, result } = (resJson) as {
@@ -467,7 +456,7 @@ export default function Home() {
     let hostname = serverUrl.replace("https://", "").replace("/", "")
 
     try {
-      const ret = await agent.api.com.atproto.repo.putRecord({
+      const postObject = {
         repo: agent.session?.did ?? '',
         collection: 'app.bsky.feed.generator',
         rkey: recordName,
@@ -478,7 +467,9 @@ export default function Home() {
           avatar: avatarRef,
           createdAt: new Date().toISOString(),
         },
-      })
+      }
+
+      const ret = await agent.api.com.atproto.repo.putRecord(postObject)
       if (ret.success) {
         setPublishCompleteMessage('更新処理が成功しました')
 
@@ -499,6 +490,18 @@ export default function Home() {
   const onPreview = async (): Promise<void> => {
     deleteMessage()
 
+    if (query === '') {
+      setPreviewMessage('Bluesky Queryは必須です。Bluesky Queryを入力してください。')
+      setIsLoading(false)
+      return
+    }
+
+    if (inputRegex === '') {
+      setPreviewMessage('Input Regexは必須です。Input Regexを入力してください。')
+      setIsLoading(false)
+      return
+    }
+
     try {
       //Blueskyにログインする
       blueskyLogin()
@@ -507,6 +510,7 @@ export default function Home() {
 
       const startTime = Date.now(); // 開始時間
       let cursor = 0
+      let apiCall = 0
       let resultPosts: Post[] = []
 
       do {
@@ -518,6 +522,7 @@ export default function Home() {
           cursor: String(cursor)
         }
         const seachResults = await agent.api.app.bsky.feed.searchPosts(params_search)
+        apiCall++
 
         cursor = Number(seachResults.data.cursor)
 
@@ -530,6 +535,7 @@ export default function Home() {
 
         for (let post of seachResults.data.posts) {
           const record = post.record as record
+          let isReply = false
 
           let text = record.text || ''
 
@@ -552,10 +558,10 @@ export default function Home() {
 
 
           //画像フィルタ
-          const imageObject  = post.embed?.images as imageObject[]
+          const imageObject = post.embed?.images as imageObject[]
           if (imageOnly === 'imageOnly' && imageObject === undefined) {
             continue
-          }else if(imageOnly === 'textOnly' && imageObject !== undefined && imageObject.length>0) {
+          } else if (imageOnly === 'textOnly' && imageObject !== undefined && imageObject.length > 0) {
             continue
           }
 
@@ -577,6 +583,10 @@ export default function Home() {
             continue
           }
 
+          if (record.reply !== undefined) {
+            isReply = true
+          }
+
           const dateObj = Date.parse(post.indexedAt)
 
           resultPosts.push({
@@ -585,10 +595,11 @@ export default function Home() {
             Time: dayjs(dateObj).fromNow(),
             Avater: post.author.avatar || '',
             Handle: post.author.handle,
-            Image: imageObject
+            Image: imageObject,
+            IsReply: isReply
           })
         }
-      } while (resultPosts.length < 100 && cursor % 100 == 0)
+      } while (resultPosts.length < 100 && cursor % 100 == 0 && apiCall < 100)
 
 
       const endTime = Date.now(); // 終了時間
@@ -708,13 +719,12 @@ export default function Home() {
           }
 
           <div className="mx-auto max-w-lg rounded-lg border">
-            <div className="flex flex-col gap-2 p-2 md:p-4">
+            <div className="flex flex-col gap-2 p-2 md:p-3">
               {!isEditing &&
                 <div>
 
                   <div className="flex items-center mt-2 mb-2">
-                    <input checked={isSaveCookie} onChange={(event) => setIsSaveCookie(event.target.checked)} id="remember-me" name="remember-me" type="checkbox" placeholder="Your password" className="w-4 h-4 text-blue-600 border-gray-200 rounded focus:ring-blue-500" />
-                    <label className="block ml-2 text-sm text-neutral-600"> 枠の中をクッキーに保存 </label>
+                    <label className="block ml-2 text-sm text-neutral-600">認証情報はクッキーに保存されます</label>
                   </div>
 
                   <div>
@@ -771,22 +781,22 @@ export default function Home() {
           <div className="mx-auto max-w-screen-2xl px-4 md:px-8">
 
             {isNewMode &&
-                <div className="items-center rounded-lg  bg-gray-300 dark:bg-gray-300 mb-6 p-2 sm:p-4">
-                    <p className="text-center text-gray-500">Query Engineに{key}は登録されていません。新規登録を行います。</p>
-                  </div>
+              <div className="items-center rounded-lg  bg-gray-300 dark:bg-gray-300 mb-6 p-2 sm:p-4">
+                <p className="text-center text-gray-500">Query Engineに{key}は登録されていません。新規登録を行います。</p>
+              </div>
             }
 
 
             {isRestoreFromD1 &&
-                <div className="items-center rounded-lg  bg-gray-300 dark:bg-gray-300 mb-6 p-2 sm:p-4">
-                    <p className="text-center text-gray-500">Query Engineには{key}は保存されていませんでしたが、Admin Consoleに{key}が残っていましたので復元しました。復元した内容はQuery Engineには登録されていませんので、必ずQuery Engineへの更新を行なってください。</p>
-                  </div>
+              <div className="items-center rounded-lg  bg-gray-300 dark:bg-gray-300 mb-6 p-2 sm:p-4">
+                <p className="text-center text-gray-500">Query Engineには{key}は保存されていませんでしたが、Admin Consoleに{key}が残っていましたので復元しました。復元した内容はQuery Engineには登録されていませんので、必ずQuery Engineへの更新を行なってください。</p>
+              </div>
             }
 
             {isDemoMode &&
-                <div className="items-center rounded-lg  bg-gray-300 dark:bg-gray-300 mb-6 p-2 sm:p-4">
-                  <p className="text-center text-gray-500 ">デモモードで起動しています。表示している内容を保存したり、Blueskyにカスタムフィードとして公開することはできません。</p>
-                </div>
+              <div className="items-center rounded-lg  bg-gray-300 dark:bg-gray-300 mb-6 p-2 sm:p-4">
+                <p className="text-center text-gray-500 ">デモモードで起動しています。表示している内容を保存したり、Blueskyにカスタムフィードとして公開することはできません。</p>
+              </div>
             }
 
             {!isDemoMode &&
@@ -980,33 +990,36 @@ export default function Home() {
                 <div className="rounded-lg border mt-2 mb-1 max-w-screen-md mx-auto" key={index}>
                   <div className="flex flex-shrink-0 p-2 pb-0 ">
                     <div className="flex items-center">
-                      <div>
-                        <img className="inline-block h-8 w-8 rounded-full" src={post.Avater} alt="" />
-                      </div>
+                      {post.Avater &&
+                        <div>
+                          <img className="inline-block h-8 w-8 rounded-full" src={post.Avater} alt="" />
+                        </div>
+                      }
                       <div className="ml-3">
-                        <p className="text-base leading-6 font-medium text-gray-600">
+                        <p className="text-sm leading-6 font-medium text-gray-600">
                           {post.DisplayName}
-                          <span className="text-sm leading-5 font-medium text-gray-400 group-hover:text-gray-300 transition ease-in-out duration-150 ml-">
+                          <span className="text-sm leading-5 font-medium text-gray-400 group-hover:text-gray-300 transition ease-in-out duration-150 ml-2">
                             @{post.Handle} {post.Time}
                           </span>
                         </p>
                       </div>
                     </div>
                   </div>
-                  <div className="pl-14 pb-2">
+                  <div className="pl-12 pb-2">
+                    {post.IsReply && <div className="text-sm text-gray-800">[↩︎返信]</div>}
                     <p className="width-auto text-sm text-gray-800 flex-shrink ">
                       {post.Text}
                     </p>
+                  </div>
 
-                    <div className='grid grid-cols-1 sm:grid-cols-2'>
+                  <div className='grid grid-cols-1 sm:grid-cols-2'>
                       {post.Image && post.Image.map((imageRef: imageObject, index2) => (
-                        <div className="m-1 p-1" key={index2} >
+                        <div className="m-1" key={index2} >
                           <img src={imageRef.thumb} alt={imageRef.alt} />
                         </div >
                       ))}
                     </div>
 
-                  </div>
                 </div>
               ))}
 
@@ -1033,9 +1046,7 @@ export default function Home() {
                 </div>
               </div>
             }
-
           </div>
-
         </div>
 
 
