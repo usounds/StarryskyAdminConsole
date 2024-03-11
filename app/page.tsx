@@ -633,7 +633,7 @@ export default function Home() {
           if (record.reply !== undefined) {
             isReply = true
           }
-
+      
           const dateObj = Date.parse(post.indexedAt)
 
           resultPosts.push({
