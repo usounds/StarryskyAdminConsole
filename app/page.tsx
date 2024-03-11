@@ -796,6 +796,9 @@ export default function Home() {
                 <select value={editFeed} onChange={(event) => { setEditFeed(event.target.value); setIsEditing(false); }} className="py-3 px-4 pe-9 border-2 block w-full bg-gray-50 ring-indigo-300 text-gray-800 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none ">
                   <option>starrysky01</option>
                   <option>starrysky02</option>
+                  <option>starrysky03</option>
+                  <option>starrysky04</option>
+                  <option>starrysky05</option>
                 </select>
                 <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">編集するカスタムフィードを選択します。</p>
               </div>
