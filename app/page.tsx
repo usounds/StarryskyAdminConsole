@@ -55,6 +55,7 @@ export default function Home() {
   const [blueskyHandle, setBlueskyHandle] = useState("");
   const [blueskyAppPassword, setBlueskyAppPassword] = useState("");
   const [recordCount, setRecordCount] = useState("");
+  const [queryEngineVersion, setQueryEngineVersion] = useState("");
 
   const [feedAvatarImg, setFeedAvatarImg] = useState('')
 
@@ -225,9 +226,9 @@ export default function Home() {
         setCookie('server-url', paramServerURL)
         setCookie('web-passkey', webPassKey)
 
-        const { isMemoryMode, recordName, query, inputRegex, invertRegex, refresh, lang, labelDisable, replyDisable, imageOnly, includeAltText, initPost,
+        const { queryEngineVersion, recordName, query, inputRegex, invertRegex, refresh, lang, labelDisable, replyDisable, imageOnly, includeAltText, initPost,
           pinnedPost, lastExecTime, limitCount, feedName, feedDescription, privateFeed, recordCount, result } = (resJson) as {
-            isMemoryMode: boolean,
+            queryEngineVersion: string,
             recordName: string,
             query: string,
             inputRegex: string,
@@ -250,8 +251,10 @@ export default function Home() {
           }
         setLoginMessage('')
 
+
         //Query Engineにデータがある
         if (result === 'OK') {
+          console.log('Query Engine Ver:'+queryEngineVersion)
           setKey(editFeed)
           setRecordName(recordName)
           setQuery(query)
@@ -277,6 +280,7 @@ export default function Home() {
           setIsNewMode(false)
           setIsRestoreFromD1(false)
           setIsCanPublish(true)
+          setQueryEngineVersion(queryEngineVersion)
 
           // Query Engineにデータがない
         } else if (result === 'NOT_FOUND') {
@@ -333,6 +337,8 @@ export default function Home() {
               setPrivateFeed('')
               setLimitCount('2000')
               setIsRestoreFromD1(false)
+
+              setQueryEngineVersion('')
 
             }
 
@@ -822,6 +828,8 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+
 
       {isEditing &&
         <div className="bg-white py-4 sm:py-4 lg:py-4">
