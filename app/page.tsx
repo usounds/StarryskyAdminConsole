@@ -3,7 +3,7 @@ export const runtime = 'edge';
 import { useState, useEffect } from 'react'
 import { TextareaAutosize } from '@mui/base'
 import { BskyAgent, BlobRef } from '@atproto/api'
-import { setCookie, getCookie,deleteCookie } from 'cookies-next'
+import { setCookie, getCookie, deleteCookie } from 'cookies-next'
 import dayjs, { extend, locale } from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/ja';
@@ -68,6 +68,11 @@ export default function Home() {
         const webPasskey = getCookie('web-passkey')
         if (webPasskey) setWebPassKey(webPasskey)
 
+        const blueskyHandle = getCookie('bluesky-handle')
+        if (blueskyHandle) setBlueskyHandle(blueskyHandle)
+        const blueskyAppPassword = getCookie('bluesky-app-password')
+        if (blueskyAppPassword) setBlueskyAppPassword(blueskyAppPassword)
+
         const blueskySession = getCookie('bluesky-session')
 
         if (blueskySession && !agent.hasSession) {
@@ -84,10 +89,18 @@ export default function Home() {
         }
         setIsLoading(false)
 
-
       } catch (e) {
-        setBlueskyLoginMessage('エラーが発生しました:' + e)
-        setIsLoading(false)
+
+        try{
+          if (blueskyHandle && blueskyAppPassword){
+            await agent.login({ identifier: blueskyHandle, password: blueskyAppPassword })
+            setCookie('bluesky-session', agent.session)
+            setIsLoading(false)
+          }
+        }catch(e){
+          setBlueskyLoginMessage('エラーが発生しました：'+e)
+          setIsLoading(false)
+        }
       }
     })();
   }, [])
@@ -343,16 +356,15 @@ export default function Home() {
   const onBlueskyLogin = async (): Promise<void> => {
     deleteMessage()
     try {
-
       await agent.login({ identifier: blueskyHandle, password: blueskyAppPassword })
       setCookie('bluesky-session', agent.session)
+      setCookie('bluesky-handle', blueskyHandle)
+      setCookie('bluesky-app-password', blueskyAppPassword)
       setIsBlueskyLogin(true)
       setIsLoading(false)
     } catch (e) {
-      console.log('login2 ')
       setBlueskyLoginMessage('エラーが発生しました:' + e)
       setIsLoading(false)
-      return
     }
 
   }
@@ -512,11 +524,13 @@ export default function Home() {
     setBlueskyHandle('')
     setBlueskyAppPassword('')
     deleteCookie('bluesky-session')
+    deleteCookie('bluesky-handle')
+    deleteCookie('bluesky-app-password')
     agent.session = {
-      did:'',
-      accessJwt:'',
-      refreshJwt:'',
-      handle:''
+      did: '',
+      accessJwt: '',
+      refreshJwt: '',
+      handle: ''
     }
 
   }
@@ -632,7 +646,10 @@ export default function Home() {
             IsReply: isReply
           })
         }
-      } while (resultPosts.length < 100 && cursor % 100 == 0 && apiCall < 100)
+
+      // 取得件数が100件を越す、APIからの取得が終わる、APIを100回呼び出した、処理を開始して10秒が経過した
+      // いずれかを満たす場合は処理を終わらせる
+      } while (resultPosts.length < 100 && cursor % 100 == 0 && apiCall < 100 && (Date.now() - startTime) < 10000)
 
 
       const endTime = Date.now(); // 終了時間
@@ -694,7 +711,7 @@ export default function Home() {
         }
       }
 
-    } 
+    }
   }
 
   const onDeleteFeed = async (): Promise<void> => {
@@ -1004,7 +1021,7 @@ export default function Home() {
 
                 <button onClick={onPreview} disabled={isLoading} className="block mt-2 mb-2 rounded-lg w-full bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">プレビュー</button>
                 {previewMessage && <p className="text-red-500">{previewMessage}</p>}
-                <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">入力した検索条件の結果を表示します。100件を超したら処理を止めます。ピッタリ100件にはなりません。処理時間は参考値で、Query Engineの実際の処理時間とは異なります。</p>
+                <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">入力した検索条件の結果を表示します。100件を越すか10秒経過したら処理を止めます。処理時間はブラウザで処理しているため参考値で、Query Engineの実際の処理時間とは異なります。</p>
                 {posts && <button onClick={onPreviewReset} disabled={isLoading} className="fixed z-50 bottom-10 right-10 block mt-2 mb-2 rounded-lg  bg-gray-800 px-8 py-3 text-center text-sm text-white outline-none ring-gray-300 transition duration-100 hover:bg-gray-700 focus-visible:ring active:bg-gray-600 disabled:bg-gray-100 md:text-base">プレビュー非表示</button>}
 
                 {!isDemoMode && <button onClick={onSave} disabled={isLoading} className="mt-4 block w-full rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">Query Engine更新</button>}
@@ -1043,12 +1060,12 @@ export default function Home() {
                   </div>
 
                   <div className='grid grid-cols-1 sm:grid-cols-2'>
-                      {post.Image && post.Image.map((imageRef: imageObject, index2) => (
-                        <div className="m-1" key={index2} >
-                          <img src={imageRef.thumb} alt={imageRef.alt} />
-                        </div >
-                      ))}
-                    </div>
+                    {post.Image && post.Image.map((imageRef: imageObject, index2) => (
+                      <div className="m-1" key={index2} >
+                        <img src={imageRef.thumb} alt={imageRef.alt} />
+                      </div >
+                    ))}
+                  </div>
 
                 </div>
               ))}
@@ -1059,7 +1076,7 @@ export default function Home() {
                   <div className="mx-auto max-w-lg rounded-lg border">
                     <div className="flex flex-col gap-4 p-4 md:p-4">
                       {agent.session && <p className=" text-gray-400 dark:text-gray-600">Bluesky Handle @{agent.session.handle} でログイン中</p>}
-                      <p className="text-xs text-gray-400 dark:text-gray-600">作成した後にBlueskyのアプリからカスタムフィードを参照できるようにするには「公開」が必要です。一同公開すれば、説明文やアイコンを変更したい場合を除き、再度公開する必要はありません。</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-600">作成した後にBlueskyのアプリからカスタムフィードを参照できるようにするには「公開」が必要です。一同公開すれば、説明文やアイコンを変更したい場合を除き、再度公開する必要はありません。公開を行うBlueskyアカウントは上に表示されているアカウントです。</p>
                       <div>
                         <input type="file" accept=".png, .jpg, .jpeg" className="mb-2 w-[300px] inline-block text-sm text-gray-800 sm:text-base" onChange={changeFeedAvatar} />
                         <p className="text-xs text-gray-400 dark:text-gray-600">フィードのアイコンがデフォルトのままでよい場合は、画像は不要です。現在の仕様上、公開する際は都度画像をアップロードしていただくようお願いします。</p>
@@ -1071,7 +1088,7 @@ export default function Home() {
                       <p className="text-xs text-gray-400 dark:text-gray-600">「公開」したカスタムフィードがプロフィールから非表示になります。Query Engineのサーバーは消えませんので、ご自身で削除ください。</p>
                       {publishMessage && <p className="text-red-500">{publishMessage}</p>}
                       {publishCompleteMessage && <p className="text-blue-500">{publishCompleteMessage}</p>}
-                      <button onClick={onLogout} disabled={isLoading} className="block rounded-lg bg-write px-8 py-3 text-center border text-sm text-red-800 outline-red-800 ring-red-800 transition duration-100 hover:bg-red-200 focus-visible:ring active:bg-red-600 disabled:bg-red-100 md:text-base">Blueskyに再ログイン</button>
+                      <button onClick={onLogout} disabled={isLoading} className="block rounded-lg bg-write px-8 py-3 text-center border text-sm text-red-800 outline-red-800 ring-red-800 transition duration-100 hover:bg-red-200 focus-visible:ring active:bg-red-600 disabled:bg-red-100 md:text-base">Blueskyからログアウト</button>
                       <p className="text-xs text-gray-400 dark:text-gray-600">別のBlueskyアカウントで公開する場合はログインし直してください。</p>
                     </div>
 
