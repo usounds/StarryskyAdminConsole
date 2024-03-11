@@ -21,6 +21,7 @@ export default function RootLayout({
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
+      <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "5c79c92452d1413aa833d32da71489fe"}'></script>
       <body className={inter.className}>{children}
 
         <div className="bg-white pt-4 sm:pt-10 lg:pt-12">
