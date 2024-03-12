@@ -1093,7 +1093,7 @@ export default function Home() {
                   </div>
                   <div className="pl-12 pb-2">
                     {post.IsReply && <div className="text-sm text-gray-800">[↩︎返信]</div>}
-                    <p className="width-auto text-sm text-gray-800 flex-shrink ">
+                    <p className="width-auto text-sm text-gray-800 flex-shrink break-all">
                       {post.Text}
                     </p>
                   </div>
