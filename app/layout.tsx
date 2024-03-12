@@ -28,7 +28,7 @@ export default function RootLayout({
           <footer className="mx-auto max-w-screen-2xl px-4 md:px-8">
             <div className="flex flex-col items-center justify-between gap-4 border-t border-b py-6 md:flex-row">
               <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 md:justify-start md:gap-6">
-                <a href="https://blog.usounds.work/posts/starry-sky-01/" className="text-gray-500 transition duration-100 hover:text-gray-700">Query Engine Setup</a>
+                <a href="https://blog.usounds.work/posts/starry-sky-01/" target="_blank" className="text-gray-500 transition duration-100 hover:text-gray-700">Query Engine Setup</a>
               </nav>
               <div className="flex gap-4 px-2 md:px-2 items-center">
 
