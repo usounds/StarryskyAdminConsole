@@ -32,7 +32,7 @@ export default function Home({ params }: { params: { locale: string } }) {
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [isNewMode, setIsNewMode] = useState<boolean>(false);
   const [isRestoreFromD1, setIsRestoreFromD1] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isBlueskyLogin, setIsBlueskyLogin] = useState<boolean>(false)
   //const [isSaveCookie, setIsSaveCookie] = useState<boolean>(false)
 
@@ -66,9 +66,6 @@ export default function Home({ params }: { params: { locale: string } }) {
 
   useEffect(() => {
     (async function () {
-      console.log('call useEffect')
-
-
       try {
         const serverUrl = getCookie('server-url')
         if (serverUrl) setServerUrl(serverUrl)
@@ -110,6 +107,7 @@ export default function Home({ params }: { params: { locale: string } }) {
           if (blueskyHandle && blueskyAppPassword) {
             await agent.login({ identifier: blueskyHandle, password: blueskyAppPassword })
             setCookie('bluesky-session', agent.session)
+            setIsBlueskyLogin(true)
             setIsLoading(false)
           }
         } catch (e) {
@@ -118,6 +116,9 @@ export default function Home({ params }: { params: { locale: string } }) {
         }
       }
     })();
+
+    setIsLoading(false)
+
   }, [])
 
   type Post = {
@@ -329,6 +330,7 @@ export default function Home({ params }: { params: { locale: string } }) {
               setRecordCount('')
               setIsRestoreFromD1(true)
               setQueryEngineVersion('')
+              setLastExecTime('')
             }else{
               console.log('D1にデータない')
               setKey(editFeed)
@@ -352,6 +354,7 @@ export default function Home({ params }: { params: { locale: string } }) {
               setPrivateFeed('')
               setIsRestoreFromD1(false)
               setQueryEngineVersion('')
+              setLastExecTime('')
             }
 
           } else {
@@ -377,6 +380,7 @@ export default function Home({ params }: { params: { locale: string } }) {
             setPrivateFeed('')
             setIsRestoreFromD1(false)
             setQueryEngineVersion('')
+            setLastExecTime('')
           }
 
           setIsEditing(true)
