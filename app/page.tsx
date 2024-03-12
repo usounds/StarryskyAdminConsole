@@ -1082,7 +1082,7 @@ export default function Home() {
                         </div>
                       }
                       <div className="ml-3">
-                        <p className="text-sm leading-6 font-medium text-gray-600">
+                        <p className="text-sm leading-6 font-medium text-gray-600 break-all">
                           {post.DisplayName}
                           <span className="text-sm leading-5 font-medium text-gray-400 group-hover:text-gray-300 transition ease-in-out duration-150 ml-2">
                             @{post.Handle} {post.Time}
@@ -1093,7 +1093,7 @@ export default function Home() {
                   </div>
                   <div className="pl-12 pb-2">
                     {post.IsReply && <div className="text-sm text-gray-800">[↩︎返信]</div>}
-                    <p className="width-auto text-sm text-gray-800 flex-shrink break-all">
+                    <p className="width-auto text-sm text-gray-800 flex-shrink break-all mr-2">
                       {post.Text}
                     </p>
                   </div>
