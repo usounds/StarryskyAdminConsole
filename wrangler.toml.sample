@@ -1,0 +1,6 @@
+# If you are only using Pages + D1, you only need the below in your wrangler.toml to interact with D1 locally.
+[[d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "test-starrysky"
+database_id = "dummy"
+preview_database_id = "DB" # Required for Pages local development
