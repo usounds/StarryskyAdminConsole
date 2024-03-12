@@ -92,14 +92,14 @@ export default function Home() {
 
       } catch (e) {
 
-        try{
-          if (blueskyHandle && blueskyAppPassword){
+        try {
+          if (blueskyHandle && blueskyAppPassword) {
             await agent.login({ identifier: blueskyHandle, password: blueskyAppPassword })
             setCookie('bluesky-session', agent.session)
             setIsLoading(false)
           }
-        }catch(e){
-          setBlueskyLoginMessage('エラーが発生しました：'+e)
+        } catch (e) {
+          setBlueskyLoginMessage('エラーが発生しました：' + e)
           setIsLoading(false)
         }
       }
@@ -254,7 +254,7 @@ export default function Home() {
 
         //Query Engineにデータがある
         if (result === 'OK') {
-          console.log('Query Engine Ver:'+queryEngineVersion)
+          console.log('Query Engine Ver:' + queryEngineVersion)
           setKey(editFeed)
           setRecordName(recordName)
           setQuery(query)
@@ -286,6 +286,7 @@ export default function Home() {
         } else if (result === 'NOT_FOUND') {
           console.log('Query Engineデータなし')
           //D1から取得する
+
           const resD1 = await fetch('/api/getD1Query', requestOptions)
           if (resD1.status == 200) {
             const resD1Body = await resD1.json()
@@ -315,34 +316,35 @@ export default function Home() {
               setRecordCount('')
               setLimitCount(record.limitCount.toString())
               setIsRestoreFromD1(true)
-            } else {
-              setKey(editFeed)
-              setRecordName(editFeed)
-              setQuery('')
-              setInputRegex('')
-              setInvertRegex('')
-              setRefresh('0')
-              setLang('')
-              setLabelDisable('true')
-              setReplyDisable('false')
-              setImageOnly('false')
-              setIncludeAltText('true')
-              setInitPost('100')
-              setPinnedPost('')
-              setLastExecTime('')
-              setLimitCount('500')
-              setRecordCount('')
-              setFeedName('')
-              setFeedDescription('')
-              setPrivateFeed('')
-              setLimitCount('2000')
-              setIsRestoreFromD1(false)
-
               setQueryEngineVersion('')
-
             }
 
+          } else {
+            console.log('D1にデータないか失敗')
+            setKey(editFeed)
+            setRecordName(editFeed)
+            setQuery('')
+            setInputRegex('')
+            setInvertRegex('')
+            setRefresh('0')
+            setLang('')
+            setLabelDisable('true')
+            setReplyDisable('false')
+            setImageOnly('false')
+            setIncludeAltText('true')
+            setInitPost('100')
+            setPinnedPost('')
+            setLastExecTime('')
+            setLimitCount('500')
+            setRecordCount('')
+            setFeedName('')
+            setFeedDescription('')
+            setPrivateFeed('')
+            setLimitCount('2000')
+            setIsRestoreFromD1(false)
+            setQueryEngineVersion('')
           }
+
           setIsEditing(true)
           setIsServerEditable(false)
           setIsDemoMode(false)
@@ -392,6 +394,12 @@ export default function Home() {
 
     if (inputRegex === '') {
       setPutQueryMessage('Input Regexは必須です。Input Regexを入力してください。')
+      setIsLoading(false)
+      return
+    }
+
+    if (key === '') {
+      setPutQueryMessage('システムエラーが発生しました。Keyが設定されていません')
       setIsLoading(false)
       return
     }
@@ -639,7 +647,7 @@ export default function Home() {
           if (record.reply !== undefined) {
             isReply = true
           }
-      
+
           const dateObj = Date.parse(post.indexedAt)
 
           resultPosts.push({
@@ -653,8 +661,8 @@ export default function Home() {
           })
         }
 
-      // 取得件数が100件を越す、APIからの取得が終わる、APIを100回呼び出した、処理を開始して10秒が経過した
-      // いずれかを満たす場合は処理を終わらせる
+        // 取得件数が100件を越す、APIからの取得が終わる、APIを100回呼び出した、処理を開始して10秒が経過した
+        // いずれかを満たす場合は処理を終わらせる
       } while (resultPosts.length < 100 && cursor % 100 == 0 && apiCall < 100 && (Date.now() - startTime) < 10000)
 
 
