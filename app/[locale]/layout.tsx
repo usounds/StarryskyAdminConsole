@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import PrelineScript from "./components/PrelineScript";
+import PrelineScript from "../components/PrelineScript";
 import Head from 'next/head'
+import Link from 'next/link'
+import en from "../locales/en"
+import ja from "../locales/ja"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -13,23 +16,36 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  params: { locale },
 }: Readonly<{
   children: React.ReactNode;
-}>) {
+  params: { locale: string };
+}>
+
+) {
+  
+  const t = locale === "ja" ? ja : en;
+
   return (
     <html lang="ja">
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "5c79c92452d1413aa833d32da71489fe"}'></script>
+      {process.env.NODE_ENV==='production' && <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "5c79c92452d1413aa833d32da71489fe"}'></script>}
       <body className={inter.className}>{children}
 
         <div className="bg-white pt-4 sm:pt-10 lg:pt-12">
           <footer className="mx-auto max-w-screen-2xl px-4 md:px-8">
             <div className="flex flex-col items-center justify-between gap-4 border-t border-b py-6 md:flex-row">
               <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 md:justify-start md:gap-6">
-                <a href="https://blog.usounds.work/posts/starry-sky-01/" className="text-gray-500 transition duration-100 hover:text-gray-700">Query Engine Setup</a>
+                <a href="https://blog.usounds.work/posts/starry-sky-01/" target="_blank" className="text-gray-500 transition duration-100 hover:text-gray-700">Query Engine Setup</a>
+                <Link href={locale === "ja"? "en" : "ja"} className="text-gray-500 transition duration-100 hover:text-gray-700" >{t.LangageSwitch}</Link>
               </nav>
+
+
+              <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 md:justify-start md:gap-6">
+              </nav>
+
               <div className="flex gap-4 px-2 md:px-2 items-center">
 
                 <a href="https://bsky.app/profile/usounds.work" target="_blank" className="text-gray-400 transition duration-100 hover:text-gray-500 active:text-gray-600">
