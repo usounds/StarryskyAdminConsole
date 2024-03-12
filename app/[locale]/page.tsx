@@ -7,10 +7,13 @@ import { setCookie, getCookie, deleteCookie } from 'cookies-next'
 import dayjs, { extend, locale } from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/ja';
+import en from "../locales/en"
+import ja from "../locales/ja"
 
 const agent = new BskyAgent({ service: 'https://bsky.social' })
 
-export default function Home() {
+export default function Home({ params }: { params: { locale: string } }) {
+  const t = params.locale === "ja" ? ja : en;
   const [serverUrl, setServerUrl] = useState("https://");
   const [webPassKey, setWebPassKey] = useState("");
   const [editFeed, setEditFeed] = useState("starrysky01");
@@ -796,7 +799,7 @@ export default function Home() {
         <div className="mx-auto max-w-screen-2xl px-4 md:px-8">
 
           {!isEditing &&
-            <p className="mx-auto max-w-screen-md text-center text-gray-500 md:text-lg mb-3">Starryskyのご利用は、事前に<a href="https://blog.usounds.work/posts/starry-sky-01/" className="text-black">Query Engineの構築</a>が必要です。</p>
+            <p className="mx-auto max-w-screen-md text-center text-gray-500 md:text-lg mb-3">{t.StarryskyIntroduction}</p>
           }
 
           <div className="mx-auto max-w-lg rounded-lg border">
@@ -805,7 +808,7 @@ export default function Home() {
                 <div>
 
                   <div className="flex items-center mt-2 mb-2">
-                    <label className="block ml-2 text-sm text-neutral-600">認証情報はクッキーに保存されます</label>
+                    <label className="block ml-2 text-sm text-neutral-600">{t.AuthenticationCredentialSaveToCookie}</label> 
                   </div>
 
                   <div>
@@ -828,20 +831,20 @@ export default function Home() {
                   <option>starrysky04</option>
                   <option>starrysky05</option>
                 </select>
-                <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">編集するカスタムフィードを選択します。</p>
+                <p className="mt-3 text-xs text-gray-600 dark:text-gray-600">{t.EditCustomFeedDescription}</p> 
               </div>
-              <button onClick={onLoad} disabled={isLoading} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">読み込み</button>
-              {!isEditing && <button disabled={isLoading} onClick={onDemoMode} className="block rounded-lg bg-gray-800 px-8 py-3 text-center text-sm text-white outline-none ring-gray-300 transition duration-100 hover:bg-gray-700 focus-visible:ring active:bg-gray-600 disabled:bg-gray-100 md:text-base">デモモード</button>}
+              <button onClick={onLoad} disabled={isLoading} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">{t.Load}</button>
+              {!isEditing && <button disabled={isLoading} onClick={onDemoMode} className="block rounded-lg bg-gray-800 px-8 py-3 text-center text-sm text-white outline-none ring-gray-300 transition duration-100 hover:bg-gray-700 focus-visible:ring active:bg-gray-600 disabled:bg-gray-100 md:text-base">{t.DemoMode}</button>}
               {loginMessage && <p className="text-red-500">{loginMessage}</p>}
 
               {!isBlueskyLogin &&
                 <div>
                   <div>
-                    <label className="block text-sm text-gray-800 dark:text-gray-800">Bluesky Handle(プレビュー/公開する際は必須)</label>
+                    <label className="block text-sm text-gray-800 dark:text-gray-800">{t.BlueskyHandle}</label>
                     <input value={blueskyHandle} onChange={(event) => setBlueskyHandle(event.target.value)} placeholder="abcd.bsky.social" name="bskyuername" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-800 dark:text-gray-800">Bluesky App Password(プレビュー/公開する際は必須)</label>
+                    <label className="block text-sm text-gray-800 dark:text-gray-800">{t.BlueskyAppPassword}</label>
                     <input value={blueskyAppPassword} type="password" onChange={(event) => setBlueskyAppPassword(event.target.value)} placeholder="zxcv-asdf-qwer" name="bskyapppassword" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
                   </div>
 
@@ -850,7 +853,7 @@ export default function Home() {
               }
 
               {!isBlueskyLogin &&
-                <button onClick={onBlueskyLogin} disabled={isLoading} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">Blueskyにログイン</button>
+                <button onClick={onBlueskyLogin} disabled={isLoading} className="block rounded-lg bg-blue-800 px-8 py-3 text-center text-sm text-white outline-none ring-blue-300 transition duration-100 hover:bg-blue-700 focus-visible:ring active:bg-blue-600 disabled:bg-blue-100 md:text-base">{t.LoginToBluesky}</button>
               }
 
               {blueskyLoginMessage && <p className="text-red-500">{blueskyLoginMessage}</p>}

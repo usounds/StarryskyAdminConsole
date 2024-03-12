@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import PrelineScript from "./components/PrelineScript";
+import PrelineScript from "../components/PrelineScript";
 import Head from 'next/head'
 
 const inter = Inter({ subsets: ["latin"] });
@@ -13,8 +13,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  params: { locale },
 }: Readonly<{
   children: React.ReactNode;
+  params: { locale: string };
 }>) {
   return (
     <html lang="ja">
