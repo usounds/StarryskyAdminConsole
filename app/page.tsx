@@ -174,12 +174,11 @@ export default function Home() {
     setInitPost('100')
     setPinnedPost('')
     setLastExecTime('')
-    setLimitCount('500')
+    setLimitCount('2000')
     setRecordCount('')
     setFeedName('')
     setFeedDescription('')
     setPrivateFeed('')
-    setLimitCount('2000')
     setIsRestoreFromD1(false)
   }
 
