@@ -63,7 +63,7 @@ export default {
     InputServerUrl:"Server URLを入力してください。",
     InputWebPassKeyword:"Web Pass Keywordを入力してください。",
     FailedLoad:"読み込みに失敗しました。:",
-    RecordNameRequired:"Record Nameは必須です。Record Nameを入力してください。",
+    RecordNameRequired:"Record Nameは必須かつ半角15文字以下で、全て小文字を入力してください。",
     BlueskyQueryRequired:"Bluesky Queryは必須です。Bluesky Queryを入力してください。",
     InputRegexRequired:"Input Regexは必須です。Input Regexを入力してください。",
     KeyRequired:"システムエラーが発生しました。Keyが設定されていません",

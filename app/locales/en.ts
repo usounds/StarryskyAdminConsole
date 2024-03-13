@@ -63,7 +63,7 @@ export default {
     InputServerUrl:"Enter the Server URL.",
     InputWebPassKeyword:"Enter Web Pass Keyword",
     FailedLoad:"Failed to load.:",
-    RecordNameRequired:"Record Name is required; please enter a Record Name.",
+    RecordNameRequired:"Record name is required and must be entered in lowercase with a maximum of 15 characters in half-width characters.",
     BlueskyQueryRequired:"Bluesky Query is required; please enter Bluesky Query.",
     InputRegexRequired:"Input Regex is required; please enter Input Regex.",
     KeyRequired:"A system error has occurred, Key is not set",
