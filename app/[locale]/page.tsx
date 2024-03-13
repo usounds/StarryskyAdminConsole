@@ -418,7 +418,10 @@ export default function Home({ params }: { params: { locale: string } }) {
   const onSave = async (): Promise<void> => {
     deleteMessage()
 
-    if (recordName === '') {
+
+    const recordNameRegex = new RegExp(/^[a-z0-9]{1,15}$/)
+
+    if (recordName === '' || !recordName.match(recordNameRegex)) {
       setPutQueryMessage(t.RecordNameRequired)
       setIsLoading(false)
       return
