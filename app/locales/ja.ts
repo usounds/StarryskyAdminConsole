@@ -40,7 +40,7 @@ export default {
     BlueskyQuery:"Bluesky Query",
     BlueskyQueryDescription:"検索キーワードを指定します。Input Regexから面倒な記号を取り除いたものとします。",
     InputRegex:"Input Regex",
-    InputRegexDescription:"絞り込みを行う正規表現を入力。複数指定する場合は全体をカッコ()でくくります。",
+    InputRegexDescription:"絞り込みを行う正規表現を入力。複数指定する場合は全体をカッコ()でくくります。特に正規表現がない場合は、Bluesky Queryと同じ値を入力してください。",
     InvertRegex:"Invert Regex",
     InvertRegexDescription:"除外する正規表現を入力。複数指定する場合は全体をカッコ()でくくります。",
     ExecButton:"処理ボタン",
