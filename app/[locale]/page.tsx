@@ -419,7 +419,7 @@ export default function Home({ params }: { params: { locale: string } }) {
     deleteMessage()
 
 
-    const recordNameRegex = new RegExp(/^[a-z0-9]{1,15}$/)
+    const recordNameRegex = new RegExp(/^[a-z0-9-]{1,15}$/)
 
     if (recordName === '' || !recordName.match(recordNameRegex)) {
       setPutQueryMessage(t.RecordNameRequired)
@@ -475,7 +475,7 @@ export default function Home({ params }: { params: { locale: string } }) {
         setPinnedPost(pinnedPostParam)
 
       }catch(e){
-        setPutQueryMessage(t.DIDError+e)
+        setPutQueryMessage(t.PinnedPostError+e)
         setIsLoading(false)
         return
 
@@ -943,6 +943,13 @@ export default function Home({ params }: { params: { locale: string } }) {
                 <p className="text-center text-gray-500 ">{t.DemoModeDescription}</p>
               </div>
             }
+
+
+            {queryEngineVersion !== 'v0.1.2' &&
+              <div className="items-center rounded-lg  bg-gray-300 dark:bg-gray-300 mb-6 p-2 sm:p-4">
+                <p className="text-center text-gray-500">{t.QueryEngineUpdate}</p>
+              </div>
+            }   
 
             {!isDemoMode &&
               <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">
