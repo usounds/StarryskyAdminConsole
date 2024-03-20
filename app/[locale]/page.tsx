@@ -448,7 +448,7 @@ export default function Home({ params }: { params: { locale: string } }) {
     let privateFeedParam = privateFeed
 
     console.log('privateFeedParam'+privateFeedParam)
-    if( privateFeed!== undefined && privateFeed !== '' && !privateFeed.startsWith('did:')){
+    if( privateFeed!== undefined && privateFeed!== null && privateFeed !== '' && !privateFeed.startsWith('did:')){
 
       try{
         const ret = await agent.resolveHandle({handle:privateFeed})
@@ -465,7 +465,7 @@ export default function Home({ params }: { params: { locale: string } }) {
 
     let pinnedPostParam = pinnedPost
     console.log('pinnedPostParam'+pinnedPostParam)
-    if( pinnedPost!== undefined && pinnedPost !== '' && !pinnedPost.startsWith('at://did:')){
+    if( pinnedPost!== undefined && pinnedPost!== null && pinnedPost !== '' && !pinnedPost.startsWith('at://did:')){
 
       const parts = pinnedPostParam.split('/')
 
