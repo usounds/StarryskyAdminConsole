@@ -2,7 +2,13 @@ export const runtime = 'edge';
 import { getRequestContext } from '@cloudflare/next-on-pages'
 
 export async function POST(request: Request) {
-    if((process.env.NODE_ENV==='production' || process.env.PRODUCTION_MODE === '1' ) && !(request.headers.get('origin')==='https://starrysky-console.pages.dev' || request.headers.get('origin')==='https://preview.starrysky-console.pages.dev/') ){
+    const origin = request.headers.get('origin')
+
+    console.log(origin)
+    console.log('NODE_ENV'+process.env.NODE_ENV)
+    console.log('PRODUCTION_MODE'+process.env.PRODUCTION_MODE)
+
+    if((process.env.NODE_ENV==='production' || process.env.PRODUCTION_MODE === '1' ) && (origin ==='https://starrysky-console.pages.dev' || request.headers.get('origin')==='https://preview.starrysky-console.pages.dev/') ){
         return new Response('This Starrysky Admin Console is production mode. setQuery API only accept via https://starrysky-console.pages.dev', {
             status: 500
         })
