@@ -4,6 +4,9 @@ import { getRequestContext } from '@cloudflare/next-on-pages'
 export async function POST(request: Request) {
     const origin = request.headers.get('origin')
 
+    console.log(origin ==='https://starrysky-console.pages.dev')
+    console.log(origin==='https://preview.starrysky-console.pages.dev')
+
     if(process.env.NODE_ENV==='production'  && (origin ==='https://starrysky-console.pages.dev' || origin==='https://preview.starrysky-console.pages.dev') ){
         return new Response('This Starrysky Admin Console is production mode. setQuery API only accept via https://starrysky-console.pages.dev', {
             status: 500
