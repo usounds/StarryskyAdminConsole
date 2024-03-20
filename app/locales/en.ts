@@ -25,7 +25,7 @@ export default {
     InitPostCount:"Number of posts to be taken in on the initial job",
     InitPostCountDescription:"Specifies the number of posts to include in the initial job.",
     Label:"Contents Label",
-    LabelDescription:"Search for posts that have been set as sensitive.",
+    LabelDescription:"Search for posts that have been set as sensitive.The only labels considered are those assigned at the time of post; any official labels added later or custom labelers are excluded.",
     RadioIsSearch:"Search",
     RadioIsNotSearch:"No search",
     Reply:"Reply",
