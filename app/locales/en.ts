@@ -81,4 +81,5 @@ export default {
     PinnedPost:"Pinned Post",
     PinnedPostDescription:"You can specify a post to be pinned at the top of the feed.",
     PinnedPostError:"Please enter the URL or DID of the Bluesky post. The URL follows this format : [https://bsky.app/profile/usounds.work/post/3kngb67gg4c2d]",
+    QueryEngineUpdate:"QueryEngine has been updated. Please follow these steps to update and utilize the new features.",
   }
