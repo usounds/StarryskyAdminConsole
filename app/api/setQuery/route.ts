@@ -3,60 +3,50 @@ import { getRequestContext } from '@cloudflare/next-on-pages'
 
 export async function POST(request: Request) {
     const origin = request.headers.get('origin')
-
-    console.log(origin !== 'https://starrysky-console.pages.dev')
-    console.log(origin !== 'https://preview.starrysky-console.pages.dev')
-    console.log(!(origin === 'https://starrysky-console.pages.dev' || origin === 'https://preview.starrysky-console.pages.dev'))
-
-    if (process.env.NODE_ENV === 'production' && 
-    origin !== 'https://starrysky-console.pages.dev' &&
-    origin !== 'https://preview.starrysky-console.pages.dev') {
-    return new Response('This Starrysky Admin Console is in production mode. The setQuery API only accepts requests via https://starrysky-console.pages.dev', {
-        status: 500
-    });
-}
-    const body = await request.json()
-    const {serverUrl,key,recordName,query,inputRegex,invertRegex,refresh,lang,labelDisable,replyDisable,imageOnly,includeAltText,initPost,pinnedPost,feedAvatar,feedName,feedDescription,privateFeed,limitCount} = (body) as { 
-        serverUrl:string,
-        key:string,
-        recordName:string,
-        query:string,
-        inputRegex:string,
-        invertRegex:string,
-        refresh:string,
-        lang:string,
-        labelDisable:string,
-        replyDisable:string,
-        imageOnly:string,
-        includeAltText:string,
-        initPost:string,
-        pinnedPost:string,
-        lastExecTime:string,
-        limitCount:string,
-        feedName:string,
-        feedDescription:string,
-        feedAvatar:string,
-        privateFeed:string}
-
-    //外部アクセスを弾く
-    if(process.env.NODE_ENV==='production' && request.headers.get('origin')!=='https://starrysky-console.pages.dev'){
-        return new Response('error', {
+    
+    if (process.env.NODE_ENV === 'production' &&
+        origin !== 'https://starrysky-console.pages.dev' &&
+        origin !== 'https://preview.starrysky-console.pages.dev') {
+        return new Response('This Starrysky Admin Console is in production mode. The setQuery API only accepts requests via https://starrysky-console.pages.dev', {
             status: 500
-        })
+        });
+    }
+    const body = await request.json()
+    const { serverUrl, key, recordName, query, inputRegex, invertRegex, refresh, lang, labelDisable, replyDisable, imageOnly, includeAltText, initPost, pinnedPost, feedAvatar, feedName, feedDescription, privateFeed, limitCount } = (body) as {
+        serverUrl: string,
+        key: string,
+        recordName: string,
+        query: string,
+        inputRegex: string,
+        invertRegex: string,
+        refresh: string,
+        lang: string,
+        labelDisable: string,
+        replyDisable: string,
+        imageOnly: string,
+        includeAltText: string,
+        initPost: string,
+        pinnedPost: string,
+        lastExecTime: string,
+        limitCount: string,
+        feedName: string,
+        feedDescription: string,
+        feedAvatar: string,
+        privateFeed: string
     }
 
     //Query Engineに書き込み
-    const result = await fetch(serverUrl+"/setQuery",
+    const result = await fetch(serverUrl + "/setQuery",
         {
-            method: 'post',headers: {
+            method: 'post', headers: {
                 'Content-Type': 'application/json',
-                'X-Starrtsky-WebpassKey':request.headers.get('x-starrtsky-webpasskey')||''
+                'X-Starrtsky-WebpassKey': request.headers.get('x-starrtsky-webpasskey') || ''
             },
             body: JSON.stringify(body)
         }
-        );
+    );
 
-    if(result.status !==200){
+    if (result.status !== 200) {
         return new Response(await result.body, {
             status: result.status,
             headers: {
@@ -69,28 +59,28 @@ export async function POST(request: Request) {
     //D1に書き込み
     const { env } = getRequestContext()
     const myDb = env.DB
-    let results  = await myDb.prepare('delete from conditions where serverUrl = ? and key = ?').bind(serverUrl,key).run()
+    let results = await myDb.prepare('delete from conditions where serverUrl = ? and key = ?').bind(serverUrl, key).run()
     const collectionName = 'conditions'
     const convertedEntity = {
-        serverUrl:serverUrl,
-        key:key,
-        recordName:recordName,
-        query:query,
-        inputRegex:inputRegex,
-        invertRegex:invertRegex,
-        refresh:refresh,
-        lang:lang,
-        labelDisable:labelDisable,
-        replyDisable:replyDisable,
-        imageOnly:imageOnly,
-        initPost:initPost,
-        pinnedPost:pinnedPost,
-        feedName:feedName,
-        feedDescription:feedDescription,
-        limitCount:limitCount,
-        privateFeed:privateFeed,
-        includeAltText:includeAltText,
-        feedAvatar:''
+        serverUrl: serverUrl,
+        key: key,
+        recordName: recordName,
+        query: query,
+        inputRegex: inputRegex,
+        invertRegex: invertRegex,
+        refresh: refresh,
+        lang: lang,
+        labelDisable: labelDisable,
+        replyDisable: replyDisable,
+        imageOnly: imageOnly,
+        initPost: initPost,
+        pinnedPost: pinnedPost,
+        feedName: feedName,
+        feedDescription: feedDescription,
+        limitCount: limitCount,
+        privateFeed: privateFeed,
+        includeAltText: includeAltText,
+        feedAvatar: ''
     }
 
     const keys = Object.keys(convertedEntity)
@@ -98,19 +88,19 @@ export async function POST(request: Request) {
     const values = Object.values(convertedEntity)
     const stmt = myDb.prepare(`INSERT INTO ${collectionName} (${keys.map(key => `"${key}"`).join(', ')}) VALUES (${valuesPlaceholders});`).bind(...values)
 
-    try{
+    try {
         await stmt.run()
-        return new Response(JSON.stringify({ result:'OK' }) , {
+        return new Response(JSON.stringify({ result: 'OK' }), {
             status: 200,
             headers: {
                 'content-type': 'application/json'
             }
         })
 
-    }catch(e){
+    } catch (e) {
         console.log(e)
 
-        return new Response(JSON.stringify({ result:'NG',message:'D1への書き込みに失敗しました' }) , {
+        return new Response(JSON.stringify({ result: 'NG', message: 'D1への書き込みに失敗しました' }), {
             status: 500,
             headers: {
                 'content-type': 'application/json'
