@@ -75,4 +75,10 @@ export default {
     NotInQueryEngine:"はQuery Engineには登録されていません。新規登録を行います",
     NotInQUeryEngineButInD1:"はQuery Engineには保存されていませんでしたが、Admin Consoleに残っていましたので復元しました。復元した内容はQuery Engineには登録されていませんので、必ずQuery Engineへの更新を行なってください。",
     DemoModeDescription:"デモモードで起動しています。表示している内容を保存したり、Blueskyにカスタムフィードとして公開することはできません。",
+    PrivateFeed:"プライベートフィード",
+    PrivateFeedDescription:"ここにHandleかDIDを入力すると、指定されたユーザーのみがこのフィードの中身を見ることが出来ます。ただし、フィードの存在自体は消せません。",
+    DIDError:"入力されたHandleはBlueskyに登録されていません。",
+    PinnedPost:"ピン留めポスト",
+    PinnedPostDescription:"フィードの一番上に固定表示するポストを指定します。",
+    PinnedPostError:"BlueskyのポストのURLか、DIDを入力してください。URLはこのような形式です。「https://bsky.app/profile/usounds.work/post/3kngb67gg4c2d」",
   }

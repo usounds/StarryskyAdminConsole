@@ -445,6 +445,45 @@ export default function Home({ params }: { params: { locale: string } }) {
       return
     }
 
+    let privateFeedParam = privateFeed
+
+    if( privateFeed!== undefined && privateFeed !== '' && !privateFeed.startsWith('did:')){
+
+      try{
+        const ret = await agent.resolveHandle({handle:privateFeed})
+        privateFeedParam = ret.data.did
+        setPrivateFeed(privateFeedParam)
+      }catch(e){
+        setPutQueryMessage(t.DIDError)
+        setIsLoading(false)
+        return
+
+      }
+
+    }
+
+    let pinnedPostParam = pinnedPost
+    if( pinnedPost!== undefined && pinnedPost !== '' && !pinnedPost.startsWith('at://did:')){
+
+      const parts = pinnedPostParam.split('/')
+
+      console.log(parts)
+
+      try{
+        const ret = await agent.resolveHandle({handle:parts[4]})
+        pinnedPostParam = 'at://' + ret.data.did + '/app.bsky.feed.post/' + parts[6]
+
+        setPinnedPost(pinnedPostParam)
+
+      }catch(e){
+        setPutQueryMessage(t.DIDError+e)
+        setIsLoading(false)
+        return
+
+      }
+
+    }
+
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -465,11 +504,11 @@ export default function Home({ params }: { params: { locale: string } }) {
           imageOnly: imageOnly,
           includeAltText: includeAltText,
           initPost: initPost,
-          pinnedPost: pinnedPost,
+          pinnedPost: pinnedPostParam,
           serverUrl: serverUrl,
           feedName: feedName,
           feedDescription: feedDescription,
-          privateFeed: privateFeed,
+          privateFeed: privateFeedParam,
           limitCount: limitCount
         }
       )
@@ -970,6 +1009,27 @@ export default function Home({ params }: { params: { locale: string } }) {
                   <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">{t.InitPostCountDescription}</p>
                 </div>
               </div>
+              
+            }
+
+            {!isDemoMode &&
+              <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">
+                <div>
+                  <div className='text-gray-800'>{t.PrivateFeed}</div>
+
+                  <input value={privateFeed} onChange={(event) => setPrivateFeed(event.target.value)} placeholder="xxxx.bsky.social" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                  <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">{t.PrivateFeedDescription}</p>
+                </div>
+
+                <div>
+                  <div className='text-gray-800'>{t.PinnedPost}</div>
+
+                  <input value={pinnedPost} onChange={(event) => setPinnedPost(event.target.value)} placeholder="https://bsky.app/profile/usounds.work/post/3kngb67gg4c2d" className="w-full rounded border bg-gray-50 px-3 py-2 text-gray-800 outline-none ring-indigo-300 transition duration-100 focus:ring" />
+                  <p className="mt-3 text-xs text-gray-400 dark:text-gray-600">{t.PinnedPostDescription}</p>
+                </div>
+
+              </div>
+              
             }
 
             <div className="mx-auto grid max-w-screen-md gap-4 sm:grid-cols-2 mb-5">

@@ -75,4 +75,10 @@ export default {
     NotInQueryEngine:" is not registered with Query Engine. Register a new feed.",
     NotInQUeryEngineButInD1:"is not registered with Query Engine, but was left in the Admin Console, so it was restored. The restored content is not registered in the Query Engine, so be sure to update to the Query Engine.",
     DemoModeDescription:"It is running in demonstration mode. You cannot save what you are viewing or publish it as a custom feed to Bluesky.",
+    PrivateFeed:"Private Feed",
+    PrivateFeedDescription:"When you enter a Handle or DID here, only the specified user can view the contents of this feed. However, the feed itself cannot be deleted.",
+    DIDError:"The entered Handle is not registered with Bluesky.",
+    PinnedPost:"Pinned Post",
+    PinnedPostDescription:"You can specify a post to be pinned at the top of the feed.",
+    PinnedPostError:"Please enter the URL or DID of the Bluesky post. The URL follows this format : [https://bsky.app/profile/usounds.work/post/3kngb67gg4c2d]",
   }
