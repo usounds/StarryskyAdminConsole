@@ -4,11 +4,17 @@ import { getRequestContext } from '@cloudflare/next-on-pages'
 export async function POST(request: Request) {
     const origin = request.headers.get('origin')
 
-    if (process.env.NODE_ENV === 'production' && origin !== 'https://starrysky-console.pages.dev' && origin !== 'https://preview.starrysky-console.pages.dev') {
-        return new Response('This Starrysky Admin Console is production mode. setQuery API only accept via https://starrysky-console.pages.dev', {
-            status: 500
-        })
-    }
+    console.log(origin !== 'https://starrysky-console.pages.dev')
+    console.log(origin !== 'https://preview.starrysky-console.pages.dev')
+    console.log(!(origin === 'https://starrysky-console.pages.dev' || origin === 'https://preview.starrysky-console.pages.dev'))
+
+    if (process.env.NODE_ENV === 'production' && 
+    origin !== 'https://starrysky-console.pages.dev' &&
+    origin !== 'https://preview.starrysky-console.pages.dev') {
+    return new Response('This Starrysky Admin Console is in production mode. The setQuery API only accepts requests via https://starrysky-console.pages.dev', {
+        status: 500
+    });
+}
     const body = await request.json()
     const {serverUrl,key,recordName,query,inputRegex,invertRegex,refresh,lang,labelDisable,replyDisable,imageOnly,includeAltText,initPost,pinnedPost,feedAvatar,feedName,feedDescription,privateFeed,limitCount} = (body) as { 
         serverUrl:string,
