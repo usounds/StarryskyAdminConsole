@@ -25,7 +25,7 @@ export default {
     InitPostCount:"初期取り込み件数",
     InitPostCountDescription:"最初の処理において取り込む件数を指定します。",
     Label:"成人向けコンテンツ",
-    LabelDescription:"センシティブ設定された投稿を検索対象にします。",
+    LabelDescription:"センシティブ設定された投稿を検索対象にします。投稿時に付与されたラベルのみを対象とし、後から付与された公式のラベルやカスタムのラベラーは対象外となります。",
     RadioIsSearch:"検索する",
     RadioIsNotSearch:"検索しない",
     Reply:"リプライ",
